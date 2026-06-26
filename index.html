@@ -200,9 +200,9 @@
     <div style="display:flex;justify-content:center;gap:32px;align-items:flex-start;">
       <!-- Screen 1 -->
       <div style="text-align:center;">
-        <div style="width:230px;height:490px;background:#0d0d0d;border-radius:42px;padding:11px;box-shadow:0 24px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.07);margin:0 auto 20px;overflow:hidden;position:relative;">
+        <div style="width:230px;height:523px;background:#0d0d0d;border-radius:42px;padding:11px;box-shadow:0 24px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.07);margin:0 auto 20px;overflow:hidden;position:relative;">
           <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0d0d0d;border-radius:0 0 12px 12px;z-index:10;"></div>
-          <img src="uploads/profile_crop.png" alt="Profile and logbook" style="width:100%;height:100%;object-fit:cover;object-position:top;border-radius:33px;">
+          <img src="uploads/profile_fixed.png" alt="Profile and logbook" style="width:100%;height:100%;object-fit:cover;object-position:center;border-radius:33px;">
         </div>
         <p style="font-size:13px;font-weight:500;color:#f0ede6;margin-bottom:4px;">Your Logbook</p>
         <p style="font-size:12px;color:rgba(240,237,230,0.35);">Trips, catches &amp; hours</p>
@@ -210,19 +210,19 @@
 
       <!-- Screen 2 — center, elevated -->
       <div style="text-align:center;margin-top:-30px;">
-        <div style="width:260px;height:550px;background:#0d0d0d;border-radius:48px;padding:13px;box-shadow:0 40px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(201,168,76,0.15),0 0 40px rgba(201,168,76,0.06);margin:0 auto 20px;overflow:hidden;position:relative;">
+        <div style="width:260px;height:619px;background:#0d0d0d;border-radius:48px;padding:13px;box-shadow:0 40px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(201,168,76,0.15),0 0 40px rgba(201,168,76,0.06);margin:0 auto 20px;overflow:hidden;position:relative;">
           <div style="position:absolute;top:13px;left:50%;transform:translateX(-50%);width:90px;height:26px;background:#0d0d0d;border-radius:0 0 14px 14px;z-index:10;"></div>
-          
-        <img src="uploads/feed_crop.png" alt="Narrows feed" style="width:100%;height:100%;object-fit:cover;object-position:top;border-radius:38px;"></div>
+
+        <img src="uploads/feed_fixed.png" alt="Narrows feed" style="width:100%;height:100%;object-fit:cover;object-position:center;border-radius:38px;"></div>
         <p style="font-size:13px;font-weight:500;color:#c9a84c;margin-bottom:4px;">Community Feed</p>
         <p style="font-size:12px;color:rgba(240,237,230,0.35);">Trips, catches &amp; check-ins</p>
       </div>
 
       <!-- Screen 3 -->
       <div style="text-align:center;">
-        <div style="width:230px;height:490px;background:#0d0d0d;border-radius:42px;padding:11px;box-shadow:0 24px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.07);margin:0 auto 20px;overflow:hidden;position:relative;">
+        <div style="width:230px;height:472px;background:#0d0d0d;border-radius:42px;padding:11px;box-shadow:0 24px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.07);margin:0 auto 20px;overflow:hidden;position:relative;">
           <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0d0d0d;border-radius:0 0 12px 12px;z-index:10;"></div>
-          <img src="uploads/IMG_5387 2.PNG" alt="Weather" style="width:100%;height:100%;object-fit:cover;border-radius:33px;">
+          <img src="uploads/IMG_5387 2.PNG" alt="Weather" style="width:100%;height:100%;object-fit:cover;object-position:center;border-radius:33px;">
         </div>
         <p style="font-size:13px;font-weight:500;color:#f0ede6;margin-bottom:4px;">On-Water Weather</p>
         <p style="font-size:12px;color:rgba(240,237,230,0.35);">Wind, UV, forecast &amp; more</p>
@@ -271,7 +271,7 @@
 
     <div style="display:flex;gap:12px;max-width:440px;margin:0 auto 40px;">
       <input id="footer-email" type="email" placeholder="your@email.com" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:16px 20px;font-size:15px;color:#f0ede6;font-family:'Outfit',sans-serif;outline:none;" onFocus="this.style.borderColor='rgba(201,168,76,0.5)'" onBlur="this.style.borderColor='rgba(255,255,255,0.12)'">
-      <button onClick="{{ joinWaitlistFooter }}" style="background:#c9a84c;color:#080a0e;border:none;border-radius:8px;padding:16px 28px;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;" onMouseOver="this.style.background='#dbbe65'" onMouseOut="this.style.background='#c9a84c'">
+      <button id="footer-btn" onClick="{{ joinWaitlistFooter }}" style="background:#c9a84c;color:#080a0e;border:none;border-radius:8px;padding:16px 28px;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;" onMouseOver="this.style.background='#dbbe65'" onMouseOut="this.style.background='#c9a84c'">
         Notify Me
       </button>
     </div>
@@ -300,12 +300,40 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
+// ── Loops waitlist config ───────────────────────────────────────────────
+// 1. Create a free account at https://loops.so
+// 2. Go to Forms → create a form → copy the Endpoint URL it gives you.
+//    It looks like: https://app.loops.so/api/newsletter-form/clxxxxxxxx
+// 3. Paste that full URL between the quotes below.
+const LOOPS_FORM_ENDPOINT = 'https://app.loops.so/api/newsletter-form/cmqutp76j00bw0j3qux2f9u87';
+
+async function submitToLoops(email, source) {
+  const body = new URLSearchParams({ email: email });
+  if (source) body.append('userGroup', source);
+  const res = await fetch(LOOPS_FORM_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString(),
+  });
+  let data = {};
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok || data.success === false) {
+    throw new Error((data && data.message) || 'Subscription failed');
+  }
+  return data;
+}
+
 class Component extends DCLogic {
   state = { heroSubmitted: false, footerSubmitted: false };
 
   componentDidMount() {
     this.tick();
     this._timer = setInterval(() => this.tick(), 1000);
+
+    const hero = document.getElementById('waitlist-email');
+    if (hero) hero.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); this.joinWaitlist(); } });
+    const footer = document.getElementById('footer-email');
+    if (footer) footer.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); this.joinWaitlistFooter(); } });
   }
 
   componentWillUnmount() {
@@ -335,29 +363,66 @@ class Component extends DCLogic {
     setEl('cd-secs', pad(secs));
   }
 
-  joinWaitlist() {
-    const input = document.getElementById('waitlist-email');
-    if (!input || !input.value.includes('@')) {
-      if (input) { input.style.borderColor = 'rgba(220,60,60,0.6)'; setTimeout(() => { input.style.borderColor = 'rgba(255,255,255,0.12)'; }, 1200); }
-      return;
-    }
-    const form = document.getElementById('waitlist-form');
-    const success = document.getElementById('waitlist-success');
-    if (form) form.style.display = 'none';
-    if (success) success.style.display = 'flex';
+  validEmail(v) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   }
 
-  joinWaitlistFooter() {
-    const input = document.getElementById('footer-email');
-    if (!input || !input.value.includes('@')) {
-      if (input) { input.style.borderColor = 'rgba(220,60,60,0.6)'; setTimeout(() => { input.style.borderColor = 'rgba(255,255,255,0.12)'; }, 1200); }
-      return;
+  flagError(input) {
+    if (!input) return;
+    input.style.borderColor = 'rgba(220,60,60,0.6)';
+    setTimeout(() => { input.style.borderColor = 'rgba(255,255,255,0.12)'; }, 1500);
+  }
+
+  setLoading(btn, loading) {
+    if (!btn) return;
+    if (loading) {
+      btn.dataset.label = btn.textContent.trim();
+      btn.textContent = 'Joining…';
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      btn.style.cursor = 'wait';
+    } else {
+      btn.textContent = btn.dataset.label || 'Notify Me';
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
     }
-    input.style.display = 'none';
-    const btn = input.nextElementSibling;
-    if (btn) btn.style.display = 'none';
-    const success = document.getElementById('footer-success');
-    if (success) success.style.display = 'flex';
+  }
+
+  async joinWaitlist() {
+    const input = document.getElementById('waitlist-email');
+    const btn = document.getElementById('waitlist-btn');
+    const email = input ? input.value.trim() : '';
+    if (!this.validEmail(email)) { this.flagError(input); return; }
+    this.setLoading(btn, true);
+    try {
+      await submitToLoops(email, 'website-hero');
+      const form = document.getElementById('waitlist-form');
+      const success = document.getElementById('waitlist-success');
+      if (form) form.style.display = 'none';
+      if (success) success.style.display = 'flex';
+    } catch (err) {
+      this.flagError(input);
+      this.setLoading(btn, false);
+    }
+  }
+
+  async joinWaitlistFooter() {
+    const input = document.getElementById('footer-email');
+    const btn = document.getElementById('footer-btn');
+    const email = input ? input.value.trim() : '';
+    if (!this.validEmail(email)) { this.flagError(input); return; }
+    this.setLoading(btn, true);
+    try {
+      await submitToLoops(email, 'website-footer');
+      if (input) input.style.display = 'none';
+      if (btn) btn.style.display = 'none';
+      const success = document.getElementById('footer-success');
+      if (success) success.style.display = 'flex';
+    } catch (err) {
+      this.flagError(input);
+      this.setLoading(btn, false);
+    }
   }
 
   renderVals() {
