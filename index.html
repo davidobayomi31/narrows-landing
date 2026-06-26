@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Outfit:wght@300;400;500;600&amp;family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&amp;display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: #080a0e; color: #f0ede6; font-family: 'Outfit', sans-serif; overflow-x: hidden; }
+    ::selection { background: #c9a84c33; color: #c9a84c; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(32px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(-2deg); }
+      50% { transform: translateY(-14px) rotate(-2deg); }
+    }
+    @keyframes float2 {
+      0%, 100% { transform: translateY(0px) rotate(3deg); }
+      50% { transform: translateY(-10px) rotate(3deg); }
+    }
+    @keyframes pulseGold {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.4); }
+      50% { box-shadow: 0 0 0 12px rgba(201,168,76,0); }
+    }
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+    @keyframes countFlip {
+      from { transform: translateY(-8px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .hero-anim { animation: fadeUp 0.9s cubic-bezier(.16,1,.3,1) both; }
+    .hero-anim-2 { animation: fadeUp 0.9s 0.15s cubic-bezier(.16,1,.3,1) both; }
+    .hero-anim-3 { animation: fadeUp 0.9s 0.3s cubic-bezier(.16,1,.3,1) both; }
+    .hero-anim-4 { animation: fadeUp 0.9s 0.45s cubic-bezier(.16,1,.3,1) both; }
+    .hero-anim-5 { animation: fadeUp 0.9s 0.6s cubic-bezier(.16,1,.3,1) both; }
+  </style>
+</helmet>
+
+<!-- ═══ NAV ═══ -->
+<nav style="position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 48px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(8,10,14,0.95) 0%,rgba(8,10,14,0) 100%);backdrop-filter:blur(2px);">
+  <img src="uploads/Narrows_logo-removebg-preview.png" alt="Narrows" style="height:48px;filter:brightness(0) invert(1);">
+  <div style="display:flex;align-items:center;gap:8px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:100px;padding:8px 18px;">
+    <div style="width:7px;height:7px;border-radius:50%;background:#c9a84c;animation:pulseGold 2s infinite;"></div>
+    <span style="font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;color:#c9a84c;letter-spacing:0.08em;text-transform:uppercase;">Launching July 17</span>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section style="min-height:100vh;display:flex;align-items:center;padding:140px 48px 80px;max-width:1400px;margin:0 auto;gap:80px;position:relative;">
+
+  <!-- Background decoration -->
+  <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden;">
+    <div style="position:absolute;top:20%;right:0;width:600px;height:600px;background:radial-gradient(ellipse at center,rgba(201,168,76,0.08) 0%,transparent 70%);border-radius:50%;"></div>
+    <div style="position:absolute;bottom:10%;left:-100px;width:400px;height:400px;background:radial-gradient(ellipse at center,rgba(30,60,100,0.2) 0%,transparent 70%);border-radius:50%;"></div>
+  </div>
+
+  <!-- Left: Copy + Form -->
+  <div style="flex:1;min-width:0;position:relative;z-index:1;">
+    <div class="hero-anim" style="display:inline-flex;align-items:center;gap:10px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:4px;padding:6px 14px;margin-bottom:32px;">
+      <span style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#c9a84c;font-weight:500;">Coming Soon · July 17, 2026</span>
+    </div>
+
+    <h1 class="hero-anim-2" style="font-family:'Bebas Neue',sans-serif;font-size:clamp(72px,8vw,120px);line-height:0.92;letter-spacing:0.01em;color:#f0ede6;margin-bottom:28px;">
+      Run The<br>
+      <span style="color:#c9a84c;">Dock.</span><br>
+      Not Around It.
+    </h1>
+
+    <p class="hero-anim-3" style="font-size:18px;line-height:1.65;color:rgba(240,237,230,0.6);max-width:480px;margin-bottom:48px;font-weight:300;">
+      Narrows is the social network built for boaters — find marinas, track trips, share catches, and connect with the water community near you.
+    </p>
+
+    <!-- Countdown -->
+    <div class="hero-anim-4" style="margin-bottom:48px;">
+      <p style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(240,237,230,0.4);margin-bottom:16px;font-weight:500;">App Store launch in</p>
+      <div style="display:flex;gap:16px;align-items:flex-end;">
+        <div style="text-align:center;">
+          <div id="cd-days" style="font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;color:#f0ede6;min-width:64px;">00</div>
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(240,237,230,0.35);margin-top:4px;">Days</div>
+        </div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:1;color:#c9a84c;margin-bottom:14px;">:</div>
+        <div style="text-align:center;">
+          <div id="cd-hours" style="font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;color:#f0ede6;min-width:64px;">00</div>
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(240,237,230,0.35);margin-top:4px;">Hours</div>
+        </div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:1;color:#c9a84c;margin-bottom:14px;">:</div>
+        <div style="text-align:center;">
+          <div id="cd-mins" style="font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;color:#f0ede6;min-width:64px;">00</div>
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(240,237,230,0.35);margin-top:4px;">Mins</div>
+        </div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:1;color:#c9a84c;margin-bottom:14px;">:</div>
+        <div style="text-align:center;">
+          <div id="cd-secs" style="font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;color:#f0ede6;min-width:64px;">00</div>
+          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(240,237,230,0.35);margin-top:4px;">Secs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Waitlist Form -->
+    <div class="hero-anim-5">
+      <p style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(240,237,230,0.45);margin-bottom:14px;font-weight:500;">Join the waitlist — be first on the water</p>
+      <div id="waitlist-form" style="display:flex;gap:12px;max-width:480px;">
+        <input id="waitlist-email" type="email" placeholder="your@email.com" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:16px 20px;font-size:15px;color:#f0ede6;font-family:'Outfit',sans-serif;outline:none;transition:border-color 0.2s;" onFocus="this.style.borderColor='rgba(201,168,76,0.5)'" onBlur="this.style.borderColor='rgba(255,255,255,0.12)'">
+        <button id="waitlist-btn" onClick="{{ joinWaitlist }}" style="background:#c9a84c;color:#080a0e;border:none;border-radius:8px;padding:16px 28px;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:background 0.2s,transform 0.15s;" onMouseOver="this.style.background='#dbbe65'" onMouseOut="this.style.background='#c9a84c'" onMouseDown="this.style.transform='scale(0.97)'" onMouseUp="this.style.transform='scale(1)'">
+          Notify Me
+        </button>
+      </div>
+      <div id="waitlist-success" style="display:none;align-items:center;gap:12px;max-width:480px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:8px;padding:16px 20px;">
+        <span style="font-size:20px;">⚓</span>
+        <span style="font-size:14px;color:#c9a84c;font-weight:500;">You're on the list! We'll notify you when Narrows drops.</span>
+      </div>
+      <p style="font-size:12px;color:rgba(240,237,230,0.25);margin-top:10px;">No spam. Just a heads-up when we launch.</p>
+    </div>
+  </div>
+
+  <!-- Right: Phone Mockup -->
+  <div style="flex:0 0 auto;display:flex;gap:-20px;align-items:flex-start;position:relative;z-index:1;">
+    <!-- Primary phone -->
+    <div style="animation:float 5s ease-in-out infinite;position:relative;z-index:2;">
+      <div style="width:270px;height:570px;background:#0d0d0d;border-radius:44px;padding:12px;box-shadow:0 40px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.08),inset 0 0 0 2px #1a1a1a;position:relative;overflow:hidden;">
+        <!-- notch -->
+        <div style="position:absolute;top:12px;left:50%;transform:translateX(-50%);width:90px;height:28px;background:#0d0d0d;border-radius:0 0 16px 16px;z-index:10;"></div>
+        <img src="uploads/IMG_5386 2.PNG" alt="Narrows app home" style="width:100%;height:100%;object-fit:cover;border-radius:34px;">
+      </div>
+    </div>
+    <!-- Secondary phone, offset -->
+    <div style="animation:float2 6s ease-in-out infinite;position:relative;z-index:1;margin-left:-50px;margin-top:60px;">
+      <div style="width:220px;height:460px;background:#0d0d0d;border-radius:38px;padding:10px;box-shadow:0 30px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.06),inset 0 0 0 2px #1a1a1a;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:75px;height:22px;background:#0d0d0d;border-radius:0 0 12px 12px;z-index:10;"></div>
+        <img src="uploads/feed_crop.png" alt="Narrows feed" style="width:100%;height:100%;object-fit:cover;border-radius:30px;">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ DIVIDER LINE ═══ -->
+<div style="max-width:1400px;margin:0 auto;padding:0 48px;">
+  <div style="height:1px;background:linear-gradient(to right,transparent,rgba(201,168,76,0.3),transparent);"></div>
+</div>
+
+<!-- ═══ WHAT IS NARROWS ═══ -->
+<section style="max-width:1400px;margin:0 auto;padding:100px 48px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;">
+    <div>
+      <p style="font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#c9a84c;font-weight:500;margin-bottom:20px;">The App</p>
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,5vw,72px);line-height:0.95;color:#f0ede6;margin-bottom:28px;">Everything you need<br><span style="color:#c9a84c;">on the water.</span></h2>
+      <p style="font-size:16px;line-height:1.75;color:rgba(240,237,230,0.55);font-weight:300;max-width:440px;">
+        Narrows brings your marina community together in one place. Check local weather and wind, discover nearby marinas, log your trips and catches, and stay connected with everyone at the dock.
+      </p>
+    </div>
+    <!-- Feature grid -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:24px;">
+        <div style="font-size:28px;margin-bottom:14px;">⛵</div>
+        <h3 style="font-size:16px;font-weight:600;color:#f0ede6;margin-bottom:8px;">Marina Directory</h3>
+        <p style="font-size:13px;line-height:1.6;color:rgba(240,237,230,0.45);font-weight:300;">Find marinas with fuel, pump-out, hydro, and more — with one tap to get directions.</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:24px;">
+        <div style="font-size:28px;margin-bottom:14px;">🗺️</div>
+        <h3 style="font-size:16px;font-weight:600;color:#f0ede6;margin-bottom:8px;">Water Map</h3>
+        <p style="font-size:13px;line-height:1.6;color:rgba(240,237,230,0.45);font-weight:300;">Drop catch pins, track trips, and explore lakes and waterways right from the app.</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:24px;">
+        <div style="font-size:28px;margin-bottom:14px;">🌤️</div>
+        <h3 style="font-size:16px;font-weight:600;color:#f0ede6;margin-bottom:8px;">On-Water Weather</h3>
+        <p style="font-size:13px;line-height:1.6;color:rgba(240,237,230,0.45);font-weight:300;">Live wind, UV, humidity, sunrise &amp; sunset — everything that matters before you leave the dock.</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:24px;">
+        <div style="font-size:28px;margin-bottom:14px;">🎣</div>
+        <h3 style="font-size:16px;font-weight:600;color:#f0ede6;margin-bottom:8px;">Social Feed</h3>
+        <p style="font-size:13px;line-height:1.6;color:rgba(240,237,230,0.45);font-weight:300;">Share your catches, trips, and check-ins with your boating community.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ APP SCREENS SHOWCASE ═══ -->
+<section style="background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.05);padding:100px 48px;overflow:hidden;">
+  <div style="max-width:1400px;margin:0 auto;">
+    <div style="text-align:center;margin-bottom:64px;">
+      <p style="font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#c9a84c;font-weight:500;margin-bottom:16px;">Inside the App</p>
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,4.5vw,64px);line-height:1;color:#f0ede6;">See what's coming July 17</h2>
+    </div>
+
+    <!-- 3 phones in a row -->
+    <div style="display:flex;justify-content:center;gap:32px;align-items:flex-start;">
+      <!-- Screen 1 -->
+      <div style="text-align:center;">
+        <div style="width:230px;height:490px;background:#0d0d0d;border-radius:42px;padding:11px;box-shadow:0 24px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.07);margin:0 auto 20px;overflow:hidden;position:relative;">
+          <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0d0d0d;border-radius:0 0 12px 12px;z-index:10;"></div>
+          <img src="uploads/profile_crop.png" alt="Profile and logbook" style="width:100%;height:100%;object-fit:cover;border-radius:33px;">
+        </div>
+        <p style="font-size:13px;font-weight:500;color:#f0ede6;margin-bottom:4px;">Your Logbook</p>
+        <p style="font-size:12px;color:rgba(240,237,230,0.35);">Trips, catches &amp; hours</p>
+      </div>
+
+      <!-- Screen 2 — center, elevated -->
+      <div style="text-align:center;margin-top:-30px;">
+        <div style="width:260px;height:550px;background:#0d0d0d;border-radius:48px;padding:13px;box-shadow:0 40px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(201,168,76,0.15),0 0 40px rgba(201,168,76,0.06);margin:0 auto 20px;overflow:hidden;position:relative;">
+          <div style="position:absolute;top:13px;left:50%;transform:translateX(-50%);width:90px;height:26px;background:#0d0d0d;border-radius:0 0 14px 14px;z-index:10;"></div>
+          
+        <img src="uploads/feed_crop.png" alt="Narrows feed" style="width:100%;height:100%;object-fit:cover;border-radius:38px;"></div>
+        <p style="font-size:13px;font-weight:500;color:#c9a84c;margin-bottom:4px;">Community Feed</p>
+        <p style="font-size:12px;color:rgba(240,237,230,0.35);">Trips, catches &amp; check-ins</p>
+      </div>
+
+      <!-- Screen 3 -->
+      <div style="text-align:center;">
+        <div style="width:230px;height:490px;background:#0d0d0d;border-radius:42px;padding:11px;box-shadow:0 24px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.07);margin:0 auto 20px;overflow:hidden;position:relative;">
+          <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0d0d0d;border-radius:0 0 12px 12px;z-index:10;"></div>
+          <img src="uploads/IMG_5387 2.PNG" alt="Weather" style="width:100%;height:100%;object-fit:cover;border-radius:33px;">
+        </div>
+        <p style="font-size:13px;font-weight:500;color:#f0ede6;margin-bottom:4px;">On-Water Weather</p>
+        <p style="font-size:12px;color:rgba(240,237,230,0.35);">Wind, UV, forecast &amp; more</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURED MARINA ═══ -->
+<section style="max-width:1400px;margin:0 auto;padding:100px 48px;">
+  <p style="font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#c9a84c;font-weight:500;margin-bottom:16px;">Now on Narrows</p>
+  <h2 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,4vw,58px);line-height:1;color:#f0ede6;margin-bottom:48px;">First marina on the platform</h2>
+
+  <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:24px;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;">
+    <div style="padding:48px;">
+      <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.25);border-radius:100px;padding:6px 14px;margin-bottom:28px;">
+        <span style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#c9a84c;font-weight:600;">Featured Marina</span>
+      </div>
+      <h3 style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:600;color:#f0ede6;margin-bottom:12px;line-height:1.1;">Blue Beacon Marina</h3>
+      <p style="font-size:14px;color:rgba(240,237,230,0.45);margin-bottom:32px;">Lake Couchiching · Orillia, ON</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px;">
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 14px;font-size:12px;color:rgba(240,237,230,0.7);font-weight:500;">⛽ Gas</span>
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 14px;font-size:12px;color:rgba(240,237,230,0.7);font-weight:500;">🔧 Pump-Out</span>
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 14px;font-size:12px;color:rgba(240,237,230,0.7);font-weight:500;">⚡ Hydro</span>
+        <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 14px;font-size:12px;color:rgba(240,237,230,0.7);font-weight:500;">🔩 Mechanic</span>
+      </div>
+      <p style="font-size:14px;color:rgba(240,237,230,0.4);">693 Atherley Rd, Orillia · 705-325-2526</p>
+    </div>
+    <!-- Marina screenshot -->
+    <div style="position:relative;overflow:hidden;min-height:340px;">
+      <img src="uploads/IMG_5349 2.JPG" alt="Blue Beacon Marina on Lake Couchiching" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 55%;">
+      <div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(8,10,14,0.6) 0%,transparent 50%);"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FINAL CTA ═══ -->
+<section style="background:linear-gradient(135deg,#0d1117 0%,#111820 50%,#0d1117 100%);border-top:1px solid rgba(255,255,255,0.06);padding:120px 48px;text-align:center;position:relative;overflow:hidden;">
+  <div style="position:absolute;inset:0;pointer-events:none;">
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:400px;background:radial-gradient(ellipse at center,rgba(201,168,76,0.07) 0%,transparent 70%);"></div>
+  </div>
+  <div style="position:relative;z-index:1;max-width:640px;margin:0 auto;">
+    <img src="uploads/Narrows_logo-removebg-preview.png" alt="Narrows" style="height:72px;margin:0 auto 32px;display:block;filter:brightness(0) invert(1);">
+    <h2 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,6vw,84px);line-height:0.95;color:#f0ede6;margin-bottom:20px;">Be First<br>On The Water.</h2>
+    <p style="font-size:16px;line-height:1.7;color:rgba(240,237,230,0.5);margin-bottom:48px;font-weight:300;">Join the waitlist and get notified the moment Narrows launches on July 17th.</p>
+
+    <div style="display:flex;gap:12px;max-width:440px;margin:0 auto 40px;">
+      <input id="footer-email" type="email" placeholder="your@email.com" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:16px 20px;font-size:15px;color:#f0ede6;font-family:'Outfit',sans-serif;outline:none;" onFocus="this.style.borderColor='rgba(201,168,76,0.5)'" onBlur="this.style.borderColor='rgba(255,255,255,0.12)'">
+      <button onClick="{{ joinWaitlistFooter }}" style="background:#c9a84c;color:#080a0e;border:none;border-radius:8px;padding:16px 28px;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;" onMouseOver="this.style.background='#dbbe65'" onMouseOut="this.style.background='#c9a84c'">
+        Notify Me
+      </button>
+    </div>
+    <div id="footer-success" style="display:none;justify-content:center;align-items:center;gap:10px;margin-bottom:32px;">
+      <span style="font-size:18px;">⚓</span>
+      <span style="font-size:14px;color:#c9a84c;font-weight:500;">You're on the list! See you July 17th.</span>
+    </div>
+
+    <!-- QR code -->
+    <div style="display:flex;align-items:center;justify-content:center;gap:20px;border-top:1px solid rgba(255,255,255,0.07);padding-top:40px;">
+      
+      
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ═══ -->
+<footer style="background:#04050a;border-top:1px solid rgba(255,255,255,0.05);padding:32px 48px;display:flex;align-items:center;justify-content:space-between;">
+  <img src="uploads/Narrows_logo-removebg-preview.png" alt="Narrows" style="height:32px;filter:brightness(0) invert(1);opacity:0.4;">
+  <p style="font-size:12px;color:rgba(240,237,230,0.2);letter-spacing:0.05em;">© 2026 Narrows · Run the dock, not around it.</p>
+  <div style="display:flex;gap:24px;">
+    <a href="#" style="font-size:12px;color:rgba(240,237,230,0.3);text-decoration:none;letter-spacing:0.05em;" onMouseOver="this.style.color='#c9a84c'" onMouseOut="this.style.color='rgba(240,237,230,0.3)'">Privacy</a>
+    <a href="#" style="font-size:12px;color:rgba(240,237,230,0.3);text-decoration:none;letter-spacing:0.05em;" onMouseOver="this.style.color='#c9a84c'" onMouseOut="this.style.color='rgba(240,237,230,0.3)'">Contact</a>
+  </div>
+</footer>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { heroSubmitted: false, footerSubmitted: false };
+
+  componentDidMount() {
+    this.tick();
+    this._timer = setInterval(() => this.tick(), 1000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this._timer);
+  }
+
+  tick() {
+    const launch = new Date('2026-07-17T00:00:00').getTime();
+    const now = Date.now();
+    const diff = Math.max(0, launch - now);
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+    const pad = n => String(n).padStart(2, '0');
+
+    const setEl = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && el.textContent !== val) el.textContent = val;
+    };
+
+    setEl('cd-days', pad(days));
+    setEl('cd-hours', pad(hours));
+    setEl('cd-mins', pad(mins));
+    setEl('cd-secs', pad(secs));
+  }
+
+  joinWaitlist() {
+    const input = document.getElementById('waitlist-email');
+    if (!input || !input.value.includes('@')) {
+      if (input) { input.style.borderColor = 'rgba(220,60,60,0.6)'; setTimeout(() => { input.style.borderColor = 'rgba(255,255,255,0.12)'; }, 1200); }
+      return;
+    }
+    const form = document.getElementById('waitlist-form');
+    const success = document.getElementById('waitlist-success');
+    if (form) form.style.display = 'none';
+    if (success) success.style.display = 'flex';
+  }
+
+  joinWaitlistFooter() {
+    const input = document.getElementById('footer-email');
+    if (!input || !input.value.includes('@')) {
+      if (input) { input.style.borderColor = 'rgba(220,60,60,0.6)'; setTimeout(() => { input.style.borderColor = 'rgba(255,255,255,0.12)'; }, 1200); }
+      return;
+    }
+    input.style.display = 'none';
+    const btn = input.nextElementSibling;
+    if (btn) btn.style.display = 'none';
+    const success = document.getElementById('footer-success');
+    if (success) success.style.display = 'flex';
+  }
+
+  renderVals() {
+    return {
+      joinWaitlist: () => this.joinWaitlist(),
+      joinWaitlistFooter: () => this.joinWaitlistFooter(),
+    };
+  }
+}
+
+</script>
+</body>
+</html>
