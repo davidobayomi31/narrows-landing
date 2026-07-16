@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["YK5Q9B4A38.site.narrows.app"],
+        "components": [
+          {
+            "/": "/post/*",
+            "comment": "Open shared post links in the Narrows app"
+          }
+        ]
+      }
+    ]
+  }
+}

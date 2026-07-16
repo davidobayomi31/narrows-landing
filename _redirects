@@ -1,0 +1,4 @@
+# Per-post share links → the teaser page (keeps the /post/<id> URL in the bar).
+# iOS opens the app directly via Universal Links when installed; this is the
+# web fallback for everyone else.
+/post/*   /post.html   200

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A post on Narrows</title>
+<meta name="description" content="Someone shared a post on Narrows — the social network built for boaters. Create a free account to see it.">
+
+<!-- Generic teaser preview (never exposes the real post content) -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://narrows.site">
+<meta property="og:title" content="Someone shared a post on Narrows">
+<meta property="og:description" content="Narrows is the social network built for boaters. Create a free account to see this post and connect with the water community near you.">
+<meta property="og:image" content="https://narrows.site/uploads/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="Narrows">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Someone shared a post on Narrows">
+<meta name="twitter:description" content="Create a free account to see this post on Narrows.">
+<meta name="twitter:image" content="https://narrows.site/uploads/og-image.png">
+
+<!-- iOS smart banner. TODO: fill in app-id once the numeric App Store ID is known. -->
+<!-- <meta name="apple-itunes-app" content="app-id=XXXXXXXXX"> -->
+
+<link rel="icon" href="/uploads/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" sizes="180x180" href="/uploads/favicon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #080a0e;
+    color: #f0ede6;
+    font-family: 'Outfit', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+  }
+  .card {
+    max-width: 420px;
+    width: 100%;
+    animation: fadeUp 0.6s ease both;
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  .logo { height: 64px; filter: brightness(0) invert(1); margin-bottom: 32px; }
+  .kicker { color: #c9a84c; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 14px; }
+  h1 { font-family: 'Bebas Neue', sans-serif; font-size: 40px; line-height: 1.05; letter-spacing: 1px; margin-bottom: 16px; }
+  p { color: #b8b3aa; font-size: 16px; line-height: 1.5; margin-bottom: 32px; }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 16px 20px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    margin-bottom: 12px;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: #c9a84c; color: #080a0e; }
+  .btn-ghost { background: transparent; color: #f0ede6; border: 1px solid #2a2d34; }
+  .foot { margin-top: 28px; }
+  .foot a { color: #6b6862; font-size: 13px; text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img class="logo" src="/uploads/Narrows_logo-removebg-preview.png" alt="Narrows">
+    <div class="kicker">Shared on Narrows</div>
+    <h1>Someone shared a post with you</h1>
+    <p>Narrows is the social network built for boaters — trips, catches, and marinas near you. Create a free account to see this post.</p>
+
+    <a class="btn btn-primary" id="getApp" href="https://narrows.site">Get the app</a>
+    <a class="btn btn-ghost" id="openApp" href="#">Open in Narrows</a>
+
+    <div class="foot"><a href="https://narrows.site">narrows.site</a></div>
+  </div>
+
+  <script>
+    // If the app is installed, iOS opens it via Universal Link before this page
+    // ever loads. This page is the fallback for people WITHOUT the app.
+    // The "Open in Narrows" button tries the custom scheme as a best-effort.
+    (function () {
+      var id = (location.pathname.split('/').filter(Boolean).pop()) || '';
+      var openBtn = document.getElementById('openApp');
+      if (id) {
+        openBtn.setAttribute('href', 'narrows://post/' + id);
+      } else {
+        openBtn.style.display = 'none';
+      }
+      // TODO: point "Get the app" at the real App Store URL once live.
+      // document.getElementById('getApp').setAttribute('href', 'https://apps.apple.com/app/idXXXXXXXXX');
+    })();
+  </script>
+</body>
+</html>
