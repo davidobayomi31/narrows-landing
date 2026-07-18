@@ -128,6 +128,23 @@
       .site-footer { flex-direction: column !important; gap: 14px !important; padding: 28px 20px !important; text-align: center !important; }
     }
 
+    /* keep the launch-notice readable + out of the way on phones/tablets */
+    #notice-bar { max-width: 520px; }
+    @media (max-width: 640px) {
+      #notice-bar {
+        left: 12px !important;
+        right: 12px !important;
+        bottom: 12px !important;
+        transform: none !important;
+        max-width: none !important;
+        width: auto !important;
+        gap: 10px !important;
+        padding: 12px 14px !important;
+        border-radius: 12px !important;
+      }
+      #notice-bar p { font-size: 12.5px !important; line-height: 1.45 !important; }
+      #notice-bar > span { font-size: 17px !important; }
+    }
     @media (max-width: 420px) {
       .nav-badge-text { font-size: 9px !important; }
       .nav-badge { padding: 5px 10px !important; }
@@ -151,7 +168,7 @@
 <!-- ═══ LAUNCH NOTICE BAR ═══ -->
 <div id="notice-bar" style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:14px;max-width:calc(100% - 32px);width:auto;background:rgba(20,17,10,0.92);border:1px solid rgba(201,168,76,0.35);border-radius:14px;padding:14px 16px 14px 20px;box-shadow:0 20px 50px rgba(0,0,0,0.5);backdrop-filter:blur(10px);animation:noticeUp 0.6s 0.4s cubic-bezier(.16,1,.3,1) both;">
   <span style="font-size:20px;flex-shrink:0;">🛠️</span>
-  <p style="font-size:13.5px;line-height:1.5;color:rgba(240,237,230,0.8);font-weight:300;margin:0;">
+  <p style="flex:1;min-width:0;font-size:13.5px;line-height:1.5;color:rgba(240,237,230,0.8);font-weight:300;margin:0;">
     <strong style="color:#c9a84c;font-weight:600;">Heads up —</strong> we ran into a few technical issues during development, so we've pushed the launch back to <strong style="color:#f0ede6;font-weight:500;">July 27</strong>. Thanks for your patience — it'll be worth the wait.
   </p>
   <button id="notice-close" aria-label="Dismiss" style="flex-shrink:0;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(240,237,230,0.7);width:28px;height:28px;border-radius:8px;font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s,color 0.2s;" onMouseOver="this.style.background='rgba(201,168,76,0.15)';this.style.color='#c9a84c'" onMouseOut="this.style.background='rgba(255,255,255,0.06)';this.style.color='rgba(240,237,230,0.7)'">✕</button>
