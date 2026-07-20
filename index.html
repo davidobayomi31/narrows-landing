@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Narrows — Run the Dock, Not Around It.</title>
-<meta name="description" content="Narrows is the social network built for boaters — find marinas, track trips, share catches, and connect with the water community near you. Launching July 27.">
+<meta name="description" content="Narrows is the social network built for boaters — find marinas, track trips, share catches, and connect with the water community near you. Now live on the App Store.">
 
 <!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://narrows.site">
 <meta property="og:title" content="Narrows — Run the Dock, Not Around It.">
-<meta property="og:description" content="The social network built for boaters. Find marinas, track trips, share catches, and connect with the water community near you. Launching July 27.">
+<meta property="og:description" content="The social network built for boaters. Find marinas, track trips, share catches, and connect with the water community near you. Now live on the App Store.">
 <meta property="og:image" content="https://narrows.site/uploads/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -19,8 +19,11 @@
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Narrows — Run the Dock, Not Around It.">
-<meta name="twitter:description" content="The social network built for boaters. Find marinas, track trips, share catches, and connect with the water community near you. Launching July 27.">
+<meta name="twitter:description" content="The social network built for boaters. Now live on the App Store — Android early access open.">
 <meta name="twitter:image" content="https://narrows.site/uploads/og-image.png">
+
+<!-- App Store smart banner on iOS Safari -->
+<meta name="apple-itunes-app" content="app-id=6788090227">
 
 <!-- Favicon -->
 <link rel="icon" href="/uploads/favicon.ico" sizes="any">
@@ -59,29 +62,16 @@
       0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.4); }
       50% { box-shadow: 0 0 0 12px rgba(201,168,76,0); }
     }
-    @keyframes scanline {
-      0% { transform: translateY(-100%); }
-      100% { transform: translateY(100vh); }
-    }
-    @keyframes countFlip {
-      from { transform: translateY(-8px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    @keyframes noticeUp {
-      from { transform: translateX(-50%) translateY(20px); opacity: 0; }
-      to { transform: translateX(-50%) translateY(0); opacity: 1; }
-    }
-    #notice-bar { width: min(560px, calc(100% - 32px)); }
-    @media (max-width: 760px) {
-      #notice-bar { padding: 12px 12px 12px 16px !important; gap: 10px !important; }
-      #notice-bar p { font-size: 12.5px !important; }
-    }
 
     .hero-anim { animation: fadeUp 0.9s cubic-bezier(.16,1,.3,1) both; }
     .hero-anim-2 { animation: fadeUp 0.9s 0.15s cubic-bezier(.16,1,.3,1) both; }
     .hero-anim-3 { animation: fadeUp 0.9s 0.3s cubic-bezier(.16,1,.3,1) both; }
     .hero-anim-4 { animation: fadeUp 0.9s 0.45s cubic-bezier(.16,1,.3,1) both; }
     .hero-anim-5 { animation: fadeUp 0.9s 0.6s cubic-bezier(.16,1,.3,1) both; }
+
+    .store-badge { display: inline-block; transition: transform 0.15s ease, opacity 0.15s ease; }
+    .store-badge:hover { transform: translateY(-2px); opacity: 0.92; }
+    .store-badge:active { transform: scale(0.98); }
 
     @media (max-width: 760px) {
       .nav-bar { padding: 14px 20px !important; }
@@ -93,17 +83,17 @@
       .hero-copy { max-width: 100% !important; }
       .hero-title { font-size: 54px !important; }
       .hero-desc { font-size: 16px !important; max-width: 100% !important; }
-      .cd-wrap { gap: 8px !important; }
-      .cd-digit { font-size: 32px !important; min-width: 40px !important; }
-      .cd-colon { font-size: 26px !important; }
-      .hero-form-row { flex-direction: column !important; gap: 10px !important; max-width: 100% !important; }
-      .hero-form-row input, .hero-form-row button { width: 100% !important; }
+      .hero-cta-row { flex-direction: column !important; align-items: stretch !important; gap: 14px !important; max-width: 100% !important; }
+      .hero-cta-row .store-badge { text-align: center; }
+      .hero-cta-row .store-badge svg { width: 200px !important; height: auto !important; }
+      .android-form-row { flex-direction: column !important; gap: 10px !important; max-width: 100% !important; }
+      .android-form-row input, .android-form-row button { width: 100% !important; }
       .hero-success { max-width: 100% !important; }
 
       .hero-phones-wrap { flex-direction: column !important; align-items: center !important; }
       .hero-phone-secondary-wrap { margin-left: 0 !important; margin-top: 0 !important; }
       .hero-phone-primary { width: 220px !important; height: 460px !important; }
-      .hero-phone-secondary { width: 180px !important; height: 376px !important; }
+      .hero-phone-secondary { width: 180px !important; height: 406px !important; }
 
       .feature-section { padding: 60px 20px !important; }
       .feature-outer-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
@@ -122,35 +112,17 @@
       .cta-section { padding: 80px 20px !important; }
       .cta-logo { height: 56px !important; }
       .cta-title { font-size: 44px !important; }
+      .cta-badges { flex-direction: column !important; align-items: center !important; gap: 14px !important; }
       .cta-form-row { flex-direction: column !important; gap: 12px !important; max-width: 100% !important; }
       .cta-form-row input, .cta-form-row button { width: 100% !important; }
 
       .site-footer { flex-direction: column !important; gap: 14px !important; padding: 28px 20px !important; text-align: center !important; }
     }
 
-    /* keep the launch-notice readable + out of the way on phones/tablets */
-    #notice-bar { max-width: 520px; }
-    @media (max-width: 640px) {
-      #notice-bar {
-        left: 12px !important;
-        right: 12px !important;
-        bottom: 12px !important;
-        transform: none !important;
-        max-width: none !important;
-        width: auto !important;
-        gap: 10px !important;
-        padding: 12px 14px !important;
-        border-radius: 12px !important;
-      }
-      #notice-bar p { font-size: 12.5px !important; line-height: 1.45 !important; }
-      #notice-bar > span { font-size: 17px !important; }
-    }
     @media (max-width: 420px) {
       .nav-badge-text { font-size: 9px !important; }
       .nav-badge { padding: 5px 10px !important; }
       .hero-title { font-size: 44px !important; }
-      .cd-digit { font-size: 26px !important; min-width: 32px !important; }
-      .cd-colon { font-size: 20px !important; }
       .cta-title { font-size: 36px !important; }
     }
   </style>
@@ -159,20 +131,11 @@
 <!-- ═══ NAV ═══ -->
 <nav class="nav-bar" style="position:fixed;top:0;left:0;right:0;z-index:100;padding:20px 48px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(8,10,14,0.95) 0%,rgba(8,10,14,0) 100%);backdrop-filter:blur(2px);">
   <img class="nav-logo" src="uploads/Narrows_logo-removebg-preview.png" alt="Narrows" style="height:48px;filter:brightness(0) invert(1);">
-  <div class="nav-badge" style="display:flex;align-items:center;gap:8px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:100px;padding:8px 18px;">
+  <a href="https://apps.apple.com/app/narrows/id6788090227" target="_blank" rel="noopener" class="nav-badge" style="display:flex;align-items:center;gap:8px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);border-radius:100px;padding:8px 18px;text-decoration:none;cursor:pointer;">
     <div style="width:7px;height:7px;border-radius:50%;background:#c9a84c;animation:pulseGold 2s infinite;"></div>
-    <span class="nav-badge-text" style="font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;color:#c9a84c;letter-spacing:0.08em;text-transform:uppercase;">Launching July 27</span>
-  </div>
+    <span class="nav-badge-text" style="font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;color:#c9a84c;letter-spacing:0.08em;text-transform:uppercase;">Now Live on the App Store</span>
+  </a>
 </nav>
-
-<!-- ═══ LAUNCH NOTICE BAR ═══ -->
-<div id="notice-bar" style="position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:14px;max-width:calc(100% - 32px);width:auto;background:rgba(20,17,10,0.92);border:1px solid rgba(201,168,76,0.35);border-radius:14px;padding:14px 16px 14px 20px;box-shadow:0 20px 50px rgba(0,0,0,0.5);backdrop-filter:blur(10px);animation:noticeUp 0.6s 0.4s cubic-bezier(.16,1,.3,1) both;">
-  <span style="font-size:20px;flex-shrink:0;">🛠️</span>
-  <p style="flex:1;min-width:0;font-size:13.5px;line-height:1.5;color:rgba(240,237,230,0.8);font-weight:300;margin:0;">
-    <strong style="color:#c9a84c;font-weight:600;">Heads up —</strong> we ran into a few technical issues during development, so we've pushed the launch back to <strong style="color:#f0ede6;font-weight:500;">July 27</strong>. Thanks for your patience — it'll be worth the wait.
-  </p>
-  <button id="notice-close" aria-label="Dismiss" style="flex-shrink:0;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(240,237,230,0.7);width:28px;height:28px;border-radius:8px;font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s,color 0.2s;" onMouseOver="this.style.background='rgba(201,168,76,0.15)';this.style.color='#c9a84c'" onMouseOut="this.style.background='rgba(255,255,255,0.06)';this.style.color='rgba(240,237,230,0.7)'">✕</button>
-</div>
 
 <!-- ═══ HERO ═══ -->
 <section class="hero-section" style="min-height:100vh;display:flex;align-items:center;padding:140px 48px 80px;max-width:1400px;margin:0 auto;gap:80px;position:relative;">
@@ -183,10 +146,11 @@
     <div style="position:absolute;bottom:10%;left:-100px;width:400px;height:400px;background:radial-gradient(ellipse at center,rgba(30,60,100,0.2) 0%,transparent 70%);border-radius:50%;"></div>
   </div>
 
-  <!-- Left: Copy + Form -->
+  <!-- Left: Copy + CTAs -->
   <div class="hero-copy" style="flex:1;min-width:0;position:relative;z-index:1;">
     <div class="hero-anim" style="display:inline-flex;align-items:center;gap:10px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.25);border-radius:4px;padding:6px 14px;margin-bottom:32px;">
-      <span style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#c9a84c;font-weight:500;">Coming Soon · July 27, 2026</span>
+      <div style="width:7px;height:7px;border-radius:50%;background:#c9a84c;animation:pulseGold 2s infinite;"></div>
+      <span style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#c9a84c;font-weight:500;">The App Is Live</span>
     </div>
 
     <h1 class="hero-anim-2 hero-title" style="font-family:'Bebas Neue',sans-serif;font-size:clamp(72px,8vw,120px);line-height:0.92;letter-spacing:0.01em;color:#f0ede6;margin-bottom:28px;">
@@ -195,50 +159,41 @@
       Not Around It.
     </h1>
 
-    <p class="hero-anim-3 hero-desc" style="font-size:18px;line-height:1.65;color:rgba(240,237,230,0.6);max-width:480px;margin-bottom:48px;font-weight:300;">
-      Narrows is the social network built for boaters — find marinas, track trips, share catches, and connect with the water community near you.
+    <p class="hero-anim-3 hero-desc" style="font-size:18px;line-height:1.65;color:rgba(240,237,230,0.6);max-width:480px;margin-bottom:40px;font-weight:300;">
+      Your entire marina community, right at the dock. Find marinas, track trips, share catches, and know the local waters before you drop anchor.
     </p>
 
-    <!-- Countdown -->
-    <div class="hero-anim-4" style="margin-bottom:48px;">
-      <p style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(240,237,230,0.4);margin-bottom:16px;font-weight:500;">App Store launch in</p>
-      <div class="cd-wrap" style="display:flex;gap:16px;align-items:flex-end;">
-        <div style="text-align:center;">
-          <div id="cd-days" class="cd-digit" style="font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;color:#f0ede6;min-width:64px;">00</div>
-          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(240,237,230,0.35);margin-top:4px;">Days</div>
-        </div>
-        <div class="cd-colon" style="font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:1;color:#c9a84c;margin-bottom:14px;">:</div>
-        <div style="text-align:center;">
-          <div id="cd-hours" class="cd-digit" style="font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;color:#f0ede6;min-width:64px;">00</div>
-          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(240,237,230,0.35);margin-top:4px;">Hours</div>
-        </div>
-        <div class="cd-colon" style="font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:1;color:#c9a84c;margin-bottom:14px;">:</div>
-        <div style="text-align:center;">
-          <div id="cd-mins" class="cd-digit" style="font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;color:#f0ede6;min-width:64px;">00</div>
-          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(240,237,230,0.35);margin-top:4px;">Mins</div>
-        </div>
-        <div class="cd-colon" style="font-family:'Bebas Neue',sans-serif;font-size:48px;line-height:1;color:#c9a84c;margin-bottom:14px;">:</div>
-        <div style="text-align:center;">
-          <div id="cd-secs" class="cd-digit" style="font-family:'Bebas Neue',sans-serif;font-size:56px;line-height:1;color:#f0ede6;min-width:64px;">00</div>
-          <div style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(240,237,230,0.35);margin-top:4px;">Secs</div>
-        </div>
-      </div>
+    <!-- Primary CTAs -->
+    <div class="hero-anim-4 hero-cta-row" style="display:flex;align-items:center;gap:20px;margin-bottom:40px;flex-wrap:wrap;">
+      <a class="store-badge" href="https://apps.apple.com/app/narrows/id6788090227" target="_blank" rel="noopener" aria-label="Download Narrows on the App Store">
+        <svg width="180" height="60" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg" role="img">
+          <rect width="120" height="40" rx="7" fill="#000"/>
+          <rect x="0.5" y="0.5" width="119" height="39" rx="6.5" fill="none" stroke="#a6a6a6" stroke-width="1"/>
+          <path fill="#fff" d="M24.77 20.3c.02-1.7.93-3.3 2.38-4.19-.92-1.31-2.4-2.13-4-2.18-1.68-.18-3.31 1-4.17 1-.87 0-2.2-.98-3.62-.95-1.85.06-3.55 1.08-4.47 2.7-1.93 3.35-.49 8.27 1.36 10.98.93 1.32 2.01 2.8 3.43 2.75 1.39-.06 1.91-.89 3.58-.89 1.66 0 2.15.89 3.6.85 1.49-.02 2.43-1.33 3.32-2.67.67-.94 1.18-1.99 1.52-3.09-1.77-.75-2.92-2.48-2.93-4.4zM22 12.21c.81-.97 1.21-2.22 1.11-3.48-1.24.13-2.38.72-3.2 1.66-.81.92-1.22 2.13-1.14 3.35 1.26.01 2.45-.55 3.23-1.53z"/>
+          <text x="38" y="16" fill="#fff" font-family="Helvetica,Arial,sans-serif" font-size="8" font-weight="400">Download on the</text>
+          <text x="38" y="30" fill="#fff" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="600">App Store</text>
+        </svg>
+      </a>
+      <a href="#android" style="display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(240,237,230,0.25);border-radius:8px;padding:15px 24px;text-decoration:none;color:#f0ede6;font-size:14px;font-weight:500;letter-spacing:0.04em;transition:border-color 0.2s,background 0.2s;" onMouseOver="this.style.borderColor='rgba(201,168,76,0.6)';this.style.background='rgba(201,168,76,0.06)'" onMouseOut="this.style.borderColor='rgba(240,237,230,0.25)';this.style.background='transparent'">
+        <svg width="18" height="20" viewBox="0 0 24 24" fill="#c9a84c" xmlns="http://www.w3.org/2000/svg"><path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24c-2.86-1.21-6.08-1.21-8.94 0L5.65 5.67c-.19-.29-.58-.38-.87-.2-.28.18-.37.54-.22.83l1.84 3.18C3.3 11.25 1.28 14.44 1 18h22c-.28-3.56-2.3-6.75-5.4-8.52zM7 15.25c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25zm10 0c-.69 0-1.25-.56-1.25-1.25s.56-1.25 1.25-1.25 1.25.56 1.25 1.25-.56 1.25-1.25 1.25z"/></svg>
+        Android? Apply to test
+      </a>
     </div>
 
-    <!-- Waitlist Form -->
-    <div class="hero-anim-5">
-      <p style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(240,237,230,0.45);margin-bottom:14px;font-weight:500;">Join the waitlist — be first on the water</p>
-      <div id="waitlist-form" class="hero-form-row" style="display:flex;gap:12px;max-width:480px;">
-        <input id="waitlist-email" type="email" placeholder="your@email.com" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:16px 20px;font-size:15px;color:#f0ede6;font-family:'Outfit',sans-serif;outline:none;transition:border-color 0.2s;" onFocus="this.style.borderColor='rgba(201,168,76,0.5)'" onBlur="this.style.borderColor='rgba(255,255,255,0.12)'">
-        <button id="waitlist-btn" onClick="{{ joinWaitlist }}" style="background:#c9a84c;color:#080a0e;border:none;border-radius:8px;padding:16px 28px;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:background 0.2s,transform 0.15s;" onMouseOver="this.style.background='#dbbe65'" onMouseOut="this.style.background='#c9a84c'" onMouseDown="this.style.transform='scale(0.97)'" onMouseUp="this.style.transform='scale(1)'">
-          Notify Me
+    <!-- Android tester capture -->
+    <div class="hero-anim-5" id="android">
+      <p style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(240,237,230,0.45);margin-bottom:14px;font-weight:500;">Android early access — join the test crew</p>
+      <div id="android-form" class="android-form-row" style="display:flex;gap:12px;max-width:480px;">
+        <input id="android-email" type="email" placeholder="your@email.com" style="flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:16px 20px;font-size:15px;color:#f0ede6;font-family:'Outfit',sans-serif;outline:none;transition:border-color 0.2s;" onFocus="this.style.borderColor='rgba(201,168,76,0.5)'" onBlur="this.style.borderColor='rgba(255,255,255,0.12)'">
+        <button id="android-btn" onClick="{{ applyAndroid }}" style="background:#c9a84c;color:#080a0e;border:none;border-radius:8px;padding:16px 28px;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:background 0.2s,transform 0.15s;" onMouseOver="this.style.background='#dbbe65'" onMouseOut="this.style.background='#c9a84c'" onMouseDown="this.style.transform='scale(0.97)'" onMouseUp="this.style.transform='scale(1)'">
+          Apply to Test
         </button>
       </div>
-      <div id="waitlist-success" class="hero-success" style="display:none;align-items:center;gap:12px;max-width:480px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:8px;padding:16px 20px;">
+      <div id="android-success" class="hero-success" style="display:none;align-items:center;gap:12px;max-width:480px;background:rgba(201,168,76,0.1);border:1px solid rgba(201,168,76,0.3);border-radius:8px;padding:16px 20px;">
         <span style="font-size:20px;">⚓</span>
-        <span style="font-size:14px;color:#c9a84c;font-weight:500;">You're on the list! We'll notify you when Narrows drops.</span>
+        <span style="font-size:14px;color:#c9a84c;font-weight:500;">You're on the crew list! We'll email your Android tester invite.</span>
       </div>
-      <p style="font-size:12px;color:rgba(240,237,230,0.25);margin-top:10px;">No spam. Just a heads-up when we launch.</p>
+      <p style="font-size:12px;color:rgba(240,237,230,0.25);margin-top:10px;">iPhone? Download now — it's free. Android testing invites roll out as spots open.</p>
     </div>
   </div>
 
@@ -254,9 +209,9 @@
     </div>
     <!-- Secondary phone, offset -->
     <div class="hero-phone-secondary-wrap" style="animation:float2 6s ease-in-out infinite;position:relative;z-index:1;margin-left:-50px;margin-top:60px;">
-      <div class="hero-phone-secondary" style="width:220px;height:460px;background:#0d0d0d;border-radius:38px;padding:10px;box-shadow:0 30px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.06),inset 0 0 0 2px #1a1a1a;position:relative;overflow:hidden;">
+      <div class="hero-phone-secondary" style="width:220px;height:502px;background:#0d0d0d;border-radius:38px;padding:10px;box-shadow:0 30px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.06),inset 0 0 0 2px #1a1a1a;position:relative;overflow:hidden;">
         <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:75px;height:22px;background:#0d0d0d;border-radius:0 0 12px 12px;z-index:10;"></div>
-        <img src="uploads/feed_fixed.png" alt="Narrows feed" style="width:100%;height:100%;object-fit:cover;object-position:top;border-radius:30px;">
+        <img src="uploads/profile_fixed.png" alt="Narrows profile and logbook" style="width:100%;height:100%;object-fit:cover;object-position:top;border-radius:30px;">
       </div>
     </div>
   </div>
@@ -308,39 +263,39 @@
   <div style="max-width:1400px;margin:0 auto;">
     <div style="text-align:center;margin-bottom:64px;">
       <p style="font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#c9a84c;font-weight:500;margin-bottom:16px;">Inside the App</p>
-      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,4.5vw,64px);line-height:1;color:#f0ede6;">See what's coming July 27</h2>
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(44px,4.5vw,64px);line-height:1;color:#f0ede6;">Take a look around</h2>
     </div>
 
     <!-- 3 phones in a row -->
     <div class="showcase-row" style="display:flex;justify-content:center;gap:32px;align-items:flex-start;">
       <!-- Screen 1 -->
       <div style="text-align:center;">
-        <div style="width:230px;height:523px;background:#0d0d0d;border-radius:42px;padding:11px;box-shadow:0 24px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.07);margin:0 auto 20px;overflow:hidden;position:relative;">
+        <div style="width:230px;height:472px;background:#0d0d0d;border-radius:42px;padding:11px;box-shadow:0 24px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.07);margin:0 auto 20px;overflow:hidden;position:relative;">
           <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0d0d0d;border-radius:0 0 12px 12px;z-index:10;"></div>
-          <img src="uploads/profile_fixed.png" alt="Profile and logbook" style="width:100%;height:100%;object-fit:cover;object-position:center;border-radius:33px;">
+          <img src="uploads/narrows-screenshot-feed-2.png" alt="Narrows community feed" style="width:100%;height:100%;object-fit:cover;object-position:top;border-radius:33px;">
         </div>
-        <p style="font-size:13px;font-weight:500;color:#f0ede6;margin-bottom:4px;">Your Logbook</p>
-        <p style="font-size:12px;color:rgba(240,237,230,0.35);">Trips, catches &amp; hours</p>
+        <p style="font-size:13px;font-weight:500;color:#f0ede6;margin-bottom:4px;">Community Feed</p>
+        <p style="font-size:12px;color:rgba(240,237,230,0.35);">Trips, catches &amp; check-ins</p>
       </div>
 
       <!-- Screen 2 — center, elevated -->
       <div class="showcase-screen-2" style="text-align:center;margin-top:-30px;">
-        <div style="width:260px;height:619px;background:#0d0d0d;border-radius:48px;padding:13px;box-shadow:0 40px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(201,168,76,0.15),0 0 40px rgba(201,168,76,0.06);margin:0 auto 20px;overflow:hidden;position:relative;">
+        <div style="width:260px;height:533px;background:#0d0d0d;border-radius:48px;padding:13px;box-shadow:0 40px 80px rgba(0,0,0,0.7),0 0 0 1px rgba(201,168,76,0.15),0 0 40px rgba(201,168,76,0.06);margin:0 auto 20px;overflow:hidden;position:relative;">
           <div style="position:absolute;top:13px;left:50%;transform:translateX(-50%);width:90px;height:26px;background:#0d0d0d;border-radius:0 0 14px 14px;z-index:10;"></div>
 
-        <img src="uploads/feed_fixed.png" alt="Narrows feed" style="width:100%;height:100%;object-fit:cover;object-position:center;border-radius:38px;"></div>
-        <p style="font-size:13px;font-weight:500;color:#c9a84c;margin-bottom:4px;">Community Feed</p>
-        <p style="font-size:12px;color:rgba(240,237,230,0.35);">Trips, catches &amp; check-ins</p>
+        <img src="uploads/IMG_5387 2.PNG" alt="Narrows home screen" style="width:100%;height:100%;object-fit:cover;object-position:top;border-radius:38px;"></div>
+        <p style="font-size:13px;font-weight:500;color:#c9a84c;margin-bottom:4px;">Home</p>
+        <p style="font-size:12px;color:rgba(240,237,230,0.35);">Weather, wind &amp; marina news</p>
       </div>
 
       <!-- Screen 3 -->
       <div style="text-align:center;">
         <div style="width:230px;height:472px;background:#0d0d0d;border-radius:42px;padding:11px;box-shadow:0 24px 60px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.07);margin:0 auto 20px;overflow:hidden;position:relative;">
           <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0d0d0d;border-radius:0 0 12px 12px;z-index:10;"></div>
-          <img src="uploads/IMG_5387 2.PNG" alt="Weather" style="width:100%;height:100%;object-fit:cover;object-position:center;border-radius:33px;">
+          <img src="uploads/narrows-screenshot-feed-1.png" alt="Trips and catches shared on Narrows" style="width:100%;height:100%;object-fit:cover;object-position:top;border-radius:33px;">
         </div>
-        <p style="font-size:13px;font-weight:500;color:#f0ede6;margin-bottom:4px;">On-Water Weather</p>
-        <p style="font-size:12px;color:rgba(240,237,230,0.35);">Wind, UV, forecast &amp; more</p>
+        <p style="font-size:13px;font-weight:500;color:#f0ede6;margin-bottom:4px;">Trips &amp; Catches</p>
+        <p style="font-size:12px;color:rgba(240,237,230,0.35);">Share the day with your crew</p>
       </div>
     </div>
   </div>
@@ -381,24 +336,33 @@
   </div>
   <div style="position:relative;z-index:1;max-width:640px;margin:0 auto;">
     <img class="cta-logo" src="uploads/Narrows_logo-removebg-preview.png" alt="Narrows" style="height:72px;margin:0 auto 32px;display:block;filter:brightness(0) invert(1);">
-    <h2 class="cta-title" style="font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,6vw,84px);line-height:0.95;color:#f0ede6;margin-bottom:20px;">Be First<br>On The Water.</h2>
-    <p style="font-size:16px;line-height:1.7;color:rgba(240,237,230,0.5);margin-bottom:48px;font-weight:300;">Join the waitlist and get notified the moment Narrows launches on July 27th.</p>
+    <h2 class="cta-title" style="font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,6vw,84px);line-height:0.95;color:#f0ede6;margin-bottom:20px;">The Water's<br>Waiting.</h2>
+    <p style="font-size:16px;line-height:1.7;color:rgba(240,237,230,0.5);margin-bottom:48px;font-weight:300;">Narrows is live on the App Store. On Android? Apply for early access and we'll email your tester invite.</p>
 
+    <!-- Store badges -->
+    <div class="cta-badges" style="display:flex;justify-content:center;gap:20px;margin-bottom:48px;">
+      <a class="store-badge" href="https://apps.apple.com/app/narrows/id6788090227" target="_blank" rel="noopener" aria-label="Download Narrows on the App Store">
+        <svg width="180" height="60" viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg" role="img">
+          <rect width="120" height="40" rx="7" fill="#000"/>
+          <rect x="0.5" y="0.5" width="119" height="39" rx="6.5" fill="none" stroke="#a6a6a6" stroke-width="1"/>
+          <path fill="#fff" d="M24.77 20.3c.02-1.7.93-3.3 2.38-4.19-.92-1.31-2.4-2.13-4-2.18-1.68-.18-3.31 1-4.17 1-.87 0-2.2-.98-3.62-.95-1.85.06-3.55 1.08-4.47 2.7-1.93 3.35-.49 8.27 1.36 10.98.93 1.32 2.01 2.8 3.43 2.75 1.39-.06 1.91-.89 3.58-.89 1.66 0 2.15.89 3.6.85 1.49-.02 2.43-1.33 3.32-2.67.67-.94 1.18-1.99 1.52-3.09-1.77-.75-2.92-2.48-2.93-4.4zM22 12.21c.81-.97 1.21-2.22 1.11-3.48-1.24.13-2.38.72-3.2 1.66-.81.92-1.22 2.13-1.14 3.35 1.26.01 2.45-.55 3.23-1.53z"/>
+          <text x="38" y="16" fill="#fff" font-family="Helvetica,Arial,sans-serif" font-size="8" font-weight="400">Download on the</text>
+          <text x="38" y="30" fill="#fff" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="600">App Store</text>
+        </svg>
+      </a>
+    </div>
+
+    <!-- Android tester form -->
+    <p style="font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:rgba(240,237,230,0.45);margin-bottom:14px;font-weight:500;">Android early access</p>
     <div class="cta-form-row" style="display:flex;gap:12px;max-width:440px;margin:0 auto 40px;">
       <input id="footer-email" type="email" placeholder="your@email.com" style="flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:16px 20px;font-size:15px;color:#f0ede6;font-family:'Outfit',sans-serif;outline:none;" onFocus="this.style.borderColor='rgba(201,168,76,0.5)'" onBlur="this.style.borderColor='rgba(255,255,255,0.12)'">
-      <button id="footer-btn" onClick="{{ joinWaitlistFooter }}" style="background:#c9a84c;color:#080a0e;border:none;border-radius:8px;padding:16px 28px;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;" onMouseOver="this.style.background='#dbbe65'" onMouseOut="this.style.background='#c9a84c'">
-        Notify Me
+      <button id="footer-btn" onClick="{{ applyAndroidFooter }}" style="background:#c9a84c;color:#080a0e;border:none;border-radius:8px;padding:16px 28px;font-size:14px;font-weight:600;font-family:'Outfit',sans-serif;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;" onMouseOver="this.style.background='#dbbe65'" onMouseOut="this.style.background='#c9a84c'">
+        Apply to Test
       </button>
     </div>
     <div id="footer-success" style="display:none;justify-content:center;align-items:center;gap:10px;margin-bottom:32px;">
       <span style="font-size:18px;">⚓</span>
-      <span style="font-size:14px;color:#c9a84c;font-weight:500;">You're on the list! See you July 27th.</span>
-    </div>
-
-    <!-- QR code -->
-    <div style="display:flex;align-items:center;justify-content:center;gap:20px;border-top:1px solid rgba(255,255,255,0.07);padding-top:40px;">
-      
-      
+      <span style="font-size:14px;color:#c9a84c;font-weight:500;">You're on the crew list! Watch your inbox for the tester invite.</span>
     </div>
   </div>
 </section>
@@ -415,11 +379,10 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
-// ── Loops waitlist config ───────────────────────────────────────────────
-// 1. Create a free account at https://loops.so
-// 2. Go to Forms → create a form → copy the Endpoint URL it gives you.
-//    It looks like: https://app.loops.so/api/newsletter-form/clxxxxxxxx
-// 3. Paste that full URL between the quotes below.
+// ── Loops config ────────────────────────────────────────────────────────
+// Android tester applications are captured through the same Loops form as
+// the old waitlist, tagged with a distinct userGroup so they can be
+// filtered and emailed the Play Store opt-in link once it exists.
 const LOOPS_FORM_ENDPOINT = 'https://app.loops.so/api/newsletter-form/cmqutp76j00bw0j3qux2f9u87';
 
 async function submitToLoops(email, source) {
@@ -442,46 +405,10 @@ class Component extends DCLogic {
   state = { heroSubmitted: false, footerSubmitted: false };
 
   componentDidMount() {
-    this.tick();
-    this._timer = setInterval(() => this.tick(), 1000);
-
-    const hero = document.getElementById('waitlist-email');
-    if (hero) hero.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); this.joinWaitlist(); } });
+    const hero = document.getElementById('android-email');
+    if (hero) hero.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); this.applyAndroid(); } });
     const footer = document.getElementById('footer-email');
-    if (footer) footer.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); this.joinWaitlistFooter(); } });
-
-    const noticeClose = document.getElementById('notice-close');
-    if (noticeClose) noticeClose.addEventListener('click', () => {
-      const bar = document.getElementById('notice-bar');
-      if (bar) bar.style.display = 'none';
-    });
-  }
-
-  componentWillUnmount() {
-    clearInterval(this._timer);
-  }
-
-  tick() {
-    const launch = new Date('2026-07-27T00:00:00').getTime();
-    const now = Date.now();
-    const diff = Math.max(0, launch - now);
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const secs = Math.floor((diff % (1000 * 60)) / 1000);
-
-    const pad = n => String(n).padStart(2, '0');
-
-    const setEl = (id, val) => {
-      const el = document.getElementById(id);
-      if (el && el.textContent !== val) el.textContent = val;
-    };
-
-    setEl('cd-days', pad(days));
-    setEl('cd-hours', pad(hours));
-    setEl('cd-mins', pad(mins));
-    setEl('cd-secs', pad(secs));
+    if (footer) footer.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); this.applyAndroidFooter(); } });
   }
 
   validEmail(v) {
@@ -498,28 +425,28 @@ class Component extends DCLogic {
     if (!btn) return;
     if (loading) {
       btn.dataset.label = btn.textContent.trim();
-      btn.textContent = 'Joining…';
+      btn.textContent = 'Sending…';
       btn.disabled = true;
       btn.style.opacity = '0.6';
       btn.style.cursor = 'wait';
     } else {
-      btn.textContent = btn.dataset.label || 'Notify Me';
+      btn.textContent = btn.dataset.label || 'Apply to Test';
       btn.disabled = false;
       btn.style.opacity = '1';
       btn.style.cursor = 'pointer';
     }
   }
 
-  async joinWaitlist() {
-    const input = document.getElementById('waitlist-email');
-    const btn = document.getElementById('waitlist-btn');
+  async applyAndroid() {
+    const input = document.getElementById('android-email');
+    const btn = document.getElementById('android-btn');
     const email = input ? input.value.trim() : '';
     if (!this.validEmail(email)) { this.flagError(input); return; }
     this.setLoading(btn, true);
     try {
-      await submitToLoops(email, 'website-hero');
-      const form = document.getElementById('waitlist-form');
-      const success = document.getElementById('waitlist-success');
+      await submitToLoops(email, 'android-tester');
+      const form = document.getElementById('android-form');
+      const success = document.getElementById('android-success');
       if (form) form.style.display = 'none';
       if (success) success.style.display = 'flex';
     } catch (err) {
@@ -528,14 +455,14 @@ class Component extends DCLogic {
     }
   }
 
-  async joinWaitlistFooter() {
+  async applyAndroidFooter() {
     const input = document.getElementById('footer-email');
     const btn = document.getElementById('footer-btn');
     const email = input ? input.value.trim() : '';
     if (!this.validEmail(email)) { this.flagError(input); return; }
     this.setLoading(btn, true);
     try {
-      await submitToLoops(email, 'website-footer');
+      await submitToLoops(email, 'android-tester');
       if (input) input.style.display = 'none';
       if (btn) btn.style.display = 'none';
       const success = document.getElementById('footer-success');
@@ -548,8 +475,8 @@ class Component extends DCLogic {
 
   renderVals() {
     return {
-      joinWaitlist: () => this.joinWaitlist(),
-      joinWaitlistFooter: () => this.joinWaitlistFooter(),
+      applyAndroid: () => this.applyAndroid(),
+      applyAndroidFooter: () => this.applyAndroidFooter(),
     };
   }
 }
