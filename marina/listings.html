@@ -144,7 +144,12 @@
     const price_cents = priceVal ? Math.round(parseFloat(priceVal) * 100) : null;
     if (priceVal && Number.isNaN(price_cents)) { errorEl.textContent = 'Enter a valid price.'; errorEl.style.display = 'block'; return; }
 
-    const exclusive = !['winterization', 'fuel'].includes(listing_type);
+    // Matches the exact rule the auto-provisioning trigger uses
+    // (provision_listings.sql) — only slip/day_slip/rental are "only one
+    // booking can hold this row at a time". Storage/haul-out/mooring aren't,
+    // so getting this wrong would wrongly block legitimate concurrent
+    // bookings on a manually-added listing.
+    const exclusive = ['slip', 'day_slip', 'rental'].includes(listing_type);
     const { error } = await supabase.from('marina_listings').insert({
       marina_id: marinaRef.id, listing_type, name, price_cents, price_unit, exclusive, active: true,
     });

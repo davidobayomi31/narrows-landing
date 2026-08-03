@@ -176,7 +176,11 @@
 
   function bubbleHtml(m) {
     const mine = m.sender_id === myId;
-    return `<div class="bubble ${mine ? 'bubble-mine' : 'bubble-theirs'}">${escapeHtml(m.body)}<div class="bubble-time">${new Date(m.created_at).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })}</div></div>`;
+    // data-id is what lets appendBubble() dedupe the Realtime echo of a
+    // message this client just sent itself (postgres_changes broadcasts
+    // INSERTs to every subscriber, including the sender) — without it, a
+    // marina's own outgoing message rendered twice.
+    return `<div class="bubble ${mine ? 'bubble-mine' : 'bubble-theirs'}" data-id="${m.id}">${escapeHtml(m.body)}<div class="bubble-time">${new Date(m.created_at).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })}</div></div>`;
   }
 
   function appendBubble(m) {
