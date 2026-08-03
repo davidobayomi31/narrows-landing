@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marina Login — Narrows</title>
+<meta name="description" content="Sign in to your Narrows marina portal.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/uploads/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/marina/assets/portal.css">
+</head>
+<body>
+
+<div class="login-wrap">
+  <div class="logo">NARROWS</div>
+  <h1 id="login-title">Marina Portal</h1>
+  <p id="login-copy">
+    Sign in with the email you used to apply as a marina partner. We'll email you a link — no password needed.
+  </p>
+
+  <form id="login-form">
+    <div class="field">
+      <label for="email">Email</label>
+      <input class="input" type="email" id="email" placeholder="you@yourmarina.com" required autocomplete="email">
+    </div>
+    <button class="btn btn-primary" type="submit" id="submit-btn" style="width:100%;">Send magic link</button>
+    <p class="error-text" id="error-text" style="display:none;"></p>
+  </form>
+
+  <div id="sent-state" style="display:none;">
+    <p class="success-text" style="margin-bottom: 8px;">Check your email</p>
+    <p>We sent a sign-in link to <strong id="sent-email"></strong>. Open it on this device to continue.</p>
+  </div>
+
+  <p style="margin-top: 32px; font-size: 12px; color: var(--muted);">
+    Not a marina partner? <a href="/" style="color: var(--gold);">Back to narrows.site</a>
+  </p>
+</div>
+
+<script type="module">
+  import { supabase } from '/marina/assets/portal.js';
+
+  // Already signed in? Skip straight to the dashboard instead of asking
+  // them to sign in again.
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    window.location.href = '/marina/dashboard.html';
+  }
+
+  const form = document.getElementById('login-form');
+  const errorText = document.getElementById('error-text');
+  const submitBtn = document.getElementById('submit-btn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    if (!email) return;
+
+    errorText.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: 'https://narrows.site/marina/dashboard.html' },
+    });
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Send magic link';
+
+    if (error) {
+      errorText.textContent = error.message || 'Could not send the link — try again.';
+      errorText.style.display = 'block';
+      return;
+    }
+
+    document.getElementById('sent-email').textContent = email;
+    document.getElementById('sent-state').style.display = 'block';
+    form.style.display = 'none';
+    document.getElementById('login-copy').style.display = 'none';
+  });
+</script>
+
+</body>
+</html>

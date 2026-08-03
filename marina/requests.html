@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Requests — Narrows Marina Portal</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/uploads/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/marina/assets/portal.css">
+</head>
+<body>
+
+<div id="portal-header"></div>
+<div class="shell">
+  <div class="page-head">
+    <h1>Requests</h1>
+    <p>Every booking request made against your marina.</p>
+  </div>
+  <div id="content"><div class="spinner">Loading…</div></div>
+</div>
+
+<script type="module">
+  import { supabase, requireMarinaSession, renderNav, pendingApprovalHtml, formatCents, formatDate, escapeHtml, timeAgo, statusPillHtml } from '/marina/assets/portal.js';
+
+  const FILTERS = ['All', 'Pending', 'Approved', 'In Progress', 'Paid', 'Completed', 'Declined', 'Cancelled'];
+  const FILTER_STATUS = { All: null, Pending: 'pending', Approved: 'approved', 'In Progress': 'in_progress', Paid: 'paid', Completed: 'completed', Declined: 'declined', Cancelled: 'cancelled' };
+
+  const TYPE_LABEL = { slip: 'Slip', day_slip: 'Day Slip', mooring: 'Mooring', storage: 'Storage', haul_out: 'Haul-Out', winterization: 'Winterization', rental: 'Rental', fuel: 'Fuel' };
+
+  const DETAIL_LABELS = {
+    boat_location: 'Boat location', tow_address: 'Tow pickup address',
+    make_model: 'Make / model', year: 'Year', beam_ft: 'Beam (ft)', draft_ft: 'Draft (ft)', height_ft: 'Height (ft)',
+    engine_type: 'Engine', fuel_type: 'Fuel type', mast_down: 'Mast down', shrink_wrap: 'Shrink-wrap',
+    boat_name: 'Boat name', registration_number: 'Registration #', power_requirement: 'Power', water_hookup: 'Water hookup',
+    insurer: 'Insurer', policy_number: 'Policy #', liability_amount: 'Liability amount', policy_expiry: 'Policy expiry',
+    trailer: 'Trailer', approx_weight_lbs: 'Approx. weight (lbs)', purpose: 'Purpose',
+    age: 'Renter age', pcoc_number: 'PCOC #', license_number: 'Photo ID #', dob: 'Date of birth',
+    emergency_contact_name: 'Emergency contact', emergency_contact_phone: 'Emergency contact phone',
+  };
+  const DOC_LABELS = { insurance_document_path: 'View insurance certificate', license_document_path: 'View photo ID' };
+  const SKIP_KEYS = new Set(['safety_ack', ...Object.keys(DOC_LABELS)]);
+
+  let marinaRef = null;
+  let bookingsCache = [];
+
+  const session = await requireMarinaSession();
+  if (session) {
+    const { marina, isPending } = session;
+    marinaRef = marina;
+    renderNav('requests', marina?.name);
+
+    const content = document.getElementById('content');
+    if (isPending) {
+      content.innerHTML = pendingApprovalHtml();
+    } else {
+      const params = new URLSearchParams(window.location.search);
+      const openId = params.get('id');
+      await loadRequests(openId);
+    }
+  }
+
+  async function loadRequests(openId) {
+    const content = document.getElementById('content');
+    const { data } = await supabase
+      .from('bookings')
+      .select('*, marina_listings!inner(listing_type, name)')
+      .eq('marina_id', marinaRef.id)
+      .order('created_at', { ascending: false });
+
+    bookingsCache = data ?? [];
+
+    if (openId) {
+      const found = bookingsCache.find((b) => b.id === openId);
+      if (found) { renderDetail(found); return; }
+    }
+    renderList('All');
+  }
+
+  function renderList(activeFilter) {
+    const content = document.getElementById('content');
+    const status = FILTER_STATUS[activeFilter];
+    const visible = status ? bookingsCache.filter((b) => b.status === status) : bookingsCache;
+
+    content.innerHTML = `
+      <div class="tabs" style="border:none; padding:0 0 16px; margin-bottom: 8px;">
+        ${FILTERS.map((f) => `<a href="#" data-filter="${f}" class="${f === activeFilter ? 'active' : ''}" style="border:1px solid var(--border); border-radius:100px; padding:8px 14px; margin-right:8px; margin-bottom:8px;">${f}</a>`).join('')}
+      </div>
+      ${visible.length === 0 ? '<p class="empty">No requests here yet.</p>' : `
+        <div class="row-list">
+          ${visible.map((b) => `
+            <a href="/marina/requests.html?id=${b.id}" class="row-item" data-open="${b.id}">
+              <div>
+                <div class="row-title">${escapeHtml(TYPE_LABEL[b.marina_listings?.listing_type] ?? 'Booking')}${b.boat_type ? ' — ' + escapeHtml(b.boat_type) : ''}${b.boat_length_ft ? ' · ' + b.boat_length_ft + ' ft' : ''}</div>
+                <div class="row-sub">${timeAgo(b.created_at)}${b.start_date ? ' · ' + formatDate(b.start_date) + (b.end_date ? ' → ' + formatDate(b.end_date) : '') : ''}</div>
+              </div>
+              <div class="row-right">${statusPillHtml(b.status)}</div>
+            </a>
+          `).join('')}
+        </div>
+      `}
+    `;
+
+    content.querySelectorAll('[data-filter]').forEach((el) => {
+      el.addEventListener('click', (e) => { e.preventDefault(); renderList(el.dataset.filter); });
+    });
+    content.querySelectorAll('[data-open]').forEach((el) => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        history.pushState({}, '', `/marina/requests.html?id=${el.dataset.open}`);
+        renderDetail(bookingsCache.find((b) => b.id === el.dataset.open));
+      });
+    });
+  }
+
+  async function viewDocument(path) {
+    const { data, error } = await supabase.storage.from('booking-documents').createSignedUrl(path, 60);
+    if (error || !data?.signedUrl) { alert('Could not open that document.'); return; }
+    window.open(data.signedUrl, '_blank');
+  }
+
+  function detailRowsHtml(b) {
+    const rows = [];
+    const type = b.marina_listings?.listing_type;
+    if (type !== 'winterization' && b.marina_listings?.name) rows.push(['Listing', b.marina_listings.name]);
+    if (b.boat_type || b.boat_length_ft) rows.push(['Boat', `${b.boat_type || '—'}${b.boat_length_ft ? ' · ' + b.boat_length_ft + ' ft' : ''}`]);
+    if (b.start_date) rows.push(['Dates', `${formatDate(b.start_date)}${b.end_date ? ' → ' + formatDate(b.end_date) : ''}`]);
+    if (b.start_ts) rows.push(['Rental window', `${new Date(b.start_ts).toLocaleString()} → ${new Date(b.end_ts).toLocaleString()}`]);
+
+    const details = b.details ?? {};
+    for (const [key, label] of Object.entries(DETAIL_LABELS)) {
+      if (details[key] == null || details[key] === '') continue;
+      let val = details[key];
+      if (typeof val === 'boolean') val = val ? 'Yes' : 'No';
+      rows.push([label, escapeHtml(String(val))]);
+    }
+    if (b.boater_notes) rows.push(['Boater notes', escapeHtml(b.boater_notes)]);
+    if (b.quoted_cents != null && b.status === 'pending') rows.push(["Boater's estimate", formatCents(b.quoted_cents) + ' (approximate)']);
+
+    let html = rows.map(([label, val]) => `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); font-weight:700;">${label}</div>
+        <div style="font-size:15px; margin-top:3px;">${val}</div>
+      </div>`).join('');
+
+    const docButtons = Object.entries(DOC_LABELS)
+      .filter(([key]) => details[key])
+      .map(([key, label]) => `<button class="btn btn-secondary btn-sm" data-doc="${escapeHtml(details[key])}" style="margin-right:8px; margin-bottom:8px;">${label} →</button>`)
+      .join('');
+    if (docButtons) html += `<div style="margin-top: 4px;">${docButtons}</div>`;
+
+    return html;
+  }
+
+  function renderDetail(b) {
+    if (!b) { renderList('All'); return; }
+    const content = document.getElementById('content');
+    const type = b.marina_listings?.listing_type;
+    const isWinterization = type === 'winterization';
+
+    content.innerHTML = `
+      <a href="/marina/requests.html" id="back-link" style="color:var(--muted); font-size:13px; text-decoration:none; display:inline-block; margin-bottom:16px;">← All requests</a>
+      <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+          <h2 style="font-size:20px;">${escapeHtml(TYPE_LABEL[type] ?? 'Booking')}</h2>
+          ${statusPillHtml(b.status)}
+        </div>
+        ${detailRowsHtml(b)}
+
+        ${b.status === 'pending' ? `
+          <div class="divider"></div>
+          <div class="field">
+            <label>Confirmed price ($)</label>
+            <input class="input" type="number" step="0.01" id="price-input" placeholder="e.g. 450">
+          </div>
+          ${isWinterization ? `
+            <div class="field">
+              <label>Scheduled date</label>
+              <input class="input" type="date" id="date-input">
+            </div>
+          ` : ''}
+          <p class="error-text" id="action-error" style="display:none;"></p>
+          <div style="display:flex; gap:12px; margin-top: 8px;">
+            <button class="btn btn-danger" id="decline-btn">Decline</button>
+            <button class="btn btn-primary" id="approve-btn" style="flex:1;">Approve</button>
+          </div>
+        ` : ''}
+
+        ${(b.status === 'approved' || b.status === 'paid') ? `
+          <div class="divider"></div>
+          <p class="error-text" id="action-error" style="display:none;"></p>
+          <div style="display:flex; gap:12px;">
+            <button class="btn btn-secondary" id="progress-btn" style="flex:1;">${isWinterization ? 'Mark in progress' : 'Mark underway'}</button>
+          </div>
+        ` : ''}
+
+        ${b.status === 'in_progress' ? `
+          <div class="divider"></div>
+          <p class="error-text" id="action-error" style="display:none;"></p>
+          <button class="btn btn-primary" id="complete-btn" style="width:100%;">Mark complete</button>
+        ` : ''}
+      </div>
+    `;
+
+    content.querySelectorAll('[data-doc]').forEach((el) => {
+      el.addEventListener('click', () => viewDocument(el.dataset.doc));
+    });
+
+    const approveBtn = document.getElementById('approve-btn');
+    if (approveBtn) approveBtn.addEventListener('click', () => approve(b));
+    const declineBtn = document.getElementById('decline-btn');
+    if (declineBtn) declineBtn.addEventListener('click', () => decline(b));
+    const progressBtn = document.getElementById('progress-btn');
+    if (progressBtn) progressBtn.addEventListener('click', () => advanceStatus(b, 'in_progress'));
+    const completeBtn = document.getElementById('complete-btn');
+    if (completeBtn) completeBtn.addEventListener('click', () => advanceStatus(b, 'completed'));
+  }
+
+  function showActionError(msg) {
+    const el = document.getElementById('action-error');
+    if (el) { el.textContent = msg; el.style.display = 'block'; }
+  }
+
+  async function notifyBoater(userId, message, title, notifType) {
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from('notifications').insert({
+      recipient_id: userId, actor_id: user?.id,
+      type: notifType === 'winterization' ? 'winterization' : 'booking',
+      comment_body: message,
+    });
+    // best-effort push — same edge function the app uses; fine if it's not reachable from here.
+    supabase.functions.invoke('send-push', { body: { recipient_id: userId, title, body: message } }).catch(() => {});
+  }
+
+  async function approve(b) {
+    const priceInput = document.getElementById('price-input');
+    const dateInput = document.getElementById('date-input');
+    const price = parseFloat(priceInput.value);
+    const isWinterization = b.marina_listings?.listing_type === 'winterization';
+
+    if (!priceInput.value.trim() || Number.isNaN(price)) { showActionError('Enter the confirmed price before approving.'); return; }
+    if (isWinterization && !dateInput.value) { showActionError('Pick a scheduled date before approving.'); return; }
+
+    const update = { status: 'approved', quoted_cents: Math.round(price * 100) };
+    if (isWinterization && dateInput.value) update.start_date = dateInput.value;
+
+    const { error } = await supabase.from('bookings').update(update).eq('id', b.id);
+    if (error) { showActionError(error.message); return; }
+
+    const typeLabel = (TYPE_LABEL[b.marina_listings?.listing_type] ?? 'Booking').toLowerCase();
+    await notifyBoater(
+      b.user_id,
+      isWinterization && dateInput.value ? `Your winterization request was approved — $${price} on ${dateInput.value}.` : `Your ${typeLabel} request was approved — $${price}.`,
+      'Request approved',
+      b.marina_listings?.listing_type
+    );
+    history.pushState({}, '', '/marina/requests.html');
+    await loadRequests();
+  }
+
+  async function decline(b) {
+    if (!confirm('Decline this request?')) return;
+    const { error } = await supabase.from('bookings').update({ status: 'declined' }).eq('id', b.id);
+    if (error) { showActionError(error.message); return; }
+    const typeLabel = (TYPE_LABEL[b.marina_listings?.listing_type] ?? 'Booking').toLowerCase();
+    await notifyBoater(b.user_id, `Your ${typeLabel} request was declined.`, 'Request declined', b.marina_listings?.listing_type);
+    history.pushState({}, '', '/marina/requests.html');
+    await loadRequests();
+  }
+
+  async function advanceStatus(b, next) {
+    const { error } = await supabase.from('bookings').update({ status: next }).eq('id', b.id);
+    if (error) { showActionError(error.message); return; }
+    const isWinterization = b.marina_listings?.listing_type === 'winterization';
+    const typeLabel = TYPE_LABEL[b.marina_listings?.listing_type] ?? 'Booking';
+    const message = next === 'in_progress'
+      ? (isWinterization ? 'Your boat winterization has started.' : `Your ${typeLabel.toLowerCase()} booking is underway.`)
+      : (isWinterization ? 'Your boat has been winterized — all done!' : `Your ${typeLabel.toLowerCase()} booking is complete.`);
+    await notifyBoater(b.user_id, message, next === 'in_progress' ? `${typeLabel} started` : `${typeLabel} complete`, b.marina_listings?.listing_type);
+    history.pushState({}, '', '/marina/requests.html');
+    await loadRequests();
+  }
+</script>
+
+</body>
+</html>

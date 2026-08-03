@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Messages — Narrows Marina Portal</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/uploads/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/marina/assets/portal.css">
+<style>
+  .thread { display: flex; flex-direction: column; height: 60vh; min-height: 420px; }
+  .thread-scroll { flex: 1; overflow-y: auto; padding: 4px 4px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .bubble { max-width: 75%; padding: 10px 14px; border-radius: 14px; font-size: 14px; line-height: 1.4; }
+  .bubble-mine { align-self: flex-end; background: var(--gold); color: #080a0e; border-bottom-right-radius: 4px; }
+  .bubble-theirs { align-self: flex-start; background: var(--card-alt); color: var(--cream); border-bottom-left-radius: 4px; }
+  .bubble-time { font-size: 10px; opacity: 0.6; margin-top: 4px; }
+  .thread-input-row { display: flex; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .thread-input-row input { flex: 1; }
+</style>
+</head>
+<body>
+
+<div id="portal-header"></div>
+<div class="shell">
+  <div class="page-head">
+    <h1>Messages</h1>
+    <p id="subhead"></p>
+  </div>
+  <div id="content"><div class="spinner">Loading…</div></div>
+</div>
+
+<script type="module">
+  import { supabase, requireMarinaSession, renderNav, pendingApprovalHtml, escapeHtml, timeAgo } from '/marina/assets/portal.js';
+
+  let marinaRef = null;
+  let myId = null;
+  let channel = null;
+
+  const session = await requireMarinaSession();
+  if (session) {
+    const { marina, isPending, user } = session;
+    marinaRef = marina;
+    myId = user.id;
+    renderNav('messages', marina?.name);
+
+    const content = document.getElementById('content');
+    if (isPending) {
+      content.innerHTML = pendingApprovalHtml();
+    } else {
+      const params = new URLSearchParams(window.location.search);
+      const boaterId = params.get('boater');
+      if (boaterId) await openThread(boaterId);
+      else await loadThreads();
+    }
+  }
+
+  async function loadThreads() {
+    document.getElementById('subhead').textContent = '';
+    const content = document.getElementById('content');
+
+    const { data: msgs } = await supabase
+      .from('messages')
+      .select('boater_id, sender_id, body, created_at, read_at')
+      .eq('marina_id', marinaRef.id)
+      .order('created_at', { ascending: false })
+      .limit(500);
+
+    const boaterIds = [...new Set((msgs ?? []).map((m) => m.boater_id))];
+    const { data: profiles } = boaterIds.length
+      ? await supabase.from('profiles').select('id, first_name, last_name').in('id', boaterIds)
+      : { data: [] };
+
+    const byBoater = new Map();
+    for (const m of msgs ?? []) {
+      const existing = byBoater.get(m.boater_id);
+      const unreadDelta = m.sender_id !== myId && m.read_at == null ? 1 : 0;
+      if (!existing) {
+        const p = profiles?.find((pr) => pr.id === m.boater_id);
+        byBoater.set(m.boater_id, {
+          boaterId: m.boater_id,
+          boaterName: `${p?.first_name || 'Boater'} ${p?.last_name || ''}`.trim(),
+          lastBody: m.body, lastAt: m.created_at, unread: unreadDelta,
+        });
+      } else {
+        existing.unread += unreadDelta;
+      }
+    }
+    const threads = [...byBoater.values()].sort((a, b) => (a.lastAt < b.lastAt ? 1 : -1));
+
+    content.innerHTML = threads.length === 0 ? '<p class="empty">No conversations yet.</p>' : `
+      <div class="row-list">
+        ${threads.map((t) => `
+          <a href="/marina/messages.html?boater=${t.boaterId}" class="row-item" data-thread="${t.boaterId}">
+            <div>
+              <div class="row-title">${escapeHtml(t.boaterName)}</div>
+              <div class="row-sub">${escapeHtml(t.lastBody)}</div>
+            </div>
+            <div class="row-right">
+              <div style="font-size:12px; color:var(--muted);">${timeAgo(t.lastAt)}</div>
+              ${t.unread > 0 ? `<span class="unread-dot"></span>` : ''}
+            </div>
+          </a>
+        `).join('')}
+      </div>
+    `;
+    content.querySelectorAll('[data-thread]').forEach((el) => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        history.pushState({}, '', `/marina/messages.html?boater=${el.dataset.thread}`);
+        openThread(el.dataset.thread);
+      });
+    });
+  }
+
+  async function openThread(boaterId) {
+    if (channel) { supabase.removeChannel(channel); channel = null; }
+
+    const { data: profile } = await supabase.from('profiles').select('first_name, last_name').eq('id', boaterId).single();
+    const boaterName = `${profile?.first_name || 'Boater'} ${profile?.last_name || ''}`.trim();
+    document.getElementById('subhead').innerHTML = `<a href="/marina/messages.html" style="color:var(--muted); text-decoration:none;">← All conversations</a>`;
+
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <div class="card">
+        <h2 style="margin-bottom: 14px;">${escapeHtml(boaterName)}</h2>
+        <div class="thread">
+          <div class="thread-scroll" id="thread-scroll"></div>
+          <div class="thread-input-row">
+            <input class="input" id="draft" placeholder="Message ${escapeHtml(boaterName)}…" autocomplete="off">
+            <button class="btn btn-primary" id="send-btn">Send</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    await loadAndMarkRead(boaterId);
+
+    channel = supabase
+      .channel(`messages-${marinaRef.id}-${boaterId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `marina_id=eq.${marinaRef.id}` }, (payload) => {
+        const row = payload.new;
+        if (row.boater_id !== boaterId) return;
+        appendBubble(row);
+        if (row.sender_id !== myId) {
+          supabase.from('messages').update({ read_at: new Date().toISOString() }).eq('id', row.id);
+        }
+      })
+      .subscribe();
+
+    const sendBtn = document.getElementById('send-btn');
+    const draftInput = document.getElementById('draft');
+    const doSend = () => sendMessage(boaterId, boaterName);
+    sendBtn.addEventListener('click', doSend);
+    draftInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSend(); });
+  }
+
+  async function loadAndMarkRead(boaterId) {
+    const { data } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('marina_id', marinaRef.id)
+      .eq('boater_id', boaterId)
+      .order('created_at', { ascending: true });
+
+    const scroll = document.getElementById('thread-scroll');
+    scroll.innerHTML = (data ?? []).map(bubbleHtml).join('');
+    scroll.scrollTop = scroll.scrollHeight;
+
+    const unreadIds = (data ?? []).filter((m) => m.sender_id !== myId && m.read_at == null).map((m) => m.id);
+    if (unreadIds.length > 0) {
+      await supabase.from('messages').update({ read_at: new Date().toISOString() }).in('id', unreadIds);
+    }
+  }
+
+  function bubbleHtml(m) {
+    const mine = m.sender_id === myId;
+    return `<div class="bubble ${mine ? 'bubble-mine' : 'bubble-theirs'}">${escapeHtml(m.body)}<div class="bubble-time">${new Date(m.created_at).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })}</div></div>`;
+  }
+
+  function appendBubble(m) {
+    const scroll = document.getElementById('thread-scroll');
+    if (!scroll) return;
+    if (scroll.querySelector(`[data-id="${m.id}"]`)) return;
+    scroll.insertAdjacentHTML('beforeend', bubbleHtml(m));
+    scroll.scrollTop = scroll.scrollHeight;
+  }
+
+  async function sendMessage(boaterId, boaterName) {
+    const input = document.getElementById('draft');
+    const body = input.value.trim();
+    if (!body) return;
+    input.value = '';
+
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({ marina_id: marinaRef.id, boater_id: boaterId, sender_id: myId, body })
+      .select()
+      .single();
+
+    if (error || !data) { input.value = body; return; }
+    appendBubble(data);
+
+    await supabase.from('notifications').insert({
+      recipient_id: boaterId, actor_id: myId, type: 'message',
+      comment_body: body.length > 80 ? body.slice(0, 80) + '…' : body,
+    });
+    supabase.functions.invoke('send-push', { body: { recipient_id: boaterId, title: marinaRef.name, body } }).catch(() => {});
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marina Portal — Narrows</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/uploads/favicon.ico" sizes="any">
+</head>
+<body style="background:#080a0e;">
+<script type="module">
+  import { supabase } from '/marina/assets/portal.js';
+  const { data: { session } } = await supabase.auth.getSession();
+  window.location.replace(session ? '/marina/dashboard.html' : '/marina/login.html');
+</script>
+</body>
+</html>

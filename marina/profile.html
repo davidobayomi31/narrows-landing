@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profile — Narrows Marina Portal</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/uploads/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/marina/assets/portal.css">
+</head>
+<body>
+
+<div id="portal-header"></div>
+<div class="shell">
+  <div class="page-head">
+    <h1>Profile</h1>
+    <p>What boaters see on your marina's page.</p>
+  </div>
+  <div id="content"><div class="spinner">Loading…</div></div>
+</div>
+
+<script type="module">
+  import { supabase, requireMarinaSession, renderNav, pendingApprovalHtml, escapeHtml } from '/marina/assets/portal.js';
+
+  const AMENITY_OPTIONS = [
+    'Fuel Dock', 'WiFi', 'Showers', 'Restrooms', 'Pump-Out Station', 'Laundry',
+    'Picnic Area', 'Boat Ramp', 'Ice', 'Repair Shop', 'Bait & Tackle', 'Security / Gated',
+  ];
+
+  let marinaRef = null;
+  let selectedAmenities = [];
+  let verifiedAddress = null; // { formatted, latitude, longitude } once the current address text has been checked
+
+  const session = await requireMarinaSession();
+  if (session) {
+    const { marina, isPending } = session;
+    marinaRef = marina;
+    renderNav('profile', marina?.name);
+
+    const content = document.getElementById('content');
+    if (isPending) content.innerHTML = pendingApprovalHtml();
+    else renderProfile(marina);
+  }
+
+  function renderProfile(m) {
+    selectedAmenities = [...(m.amenities ?? [])];
+    verifiedAddress = m.address ? { formatted: m.address, latitude: m.latitude, longitude: m.longitude } : null;
+
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <div class="card">
+        <h2>Stripe payouts</h2>
+        <p style="color:var(--muted); font-size:14px; margin: 8px 0 14px;">
+          ${m.stripe_charges_enabled
+            ? "You're connected — boaters can pay deposits directly to your marina."
+            : "Connect a Stripe account so boaters can pay deposits directly to your marina."}
+        </p>
+        <button class="btn ${m.stripe_charges_enabled ? 'btn-secondary' : 'btn-primary'} btn-sm" id="stripe-btn">
+          ${m.stripe_charges_enabled ? 'Manage Stripe account' : 'Connect with Stripe'}
+        </button>
+        <p class="error-text" id="stripe-error" style="display:none;"></p>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-bottom: 16px;">Marina details</h2>
+
+        <div class="field">
+          <label>Marina name</label>
+          <input class="input" id="f-name" value="${escapeHtml(m.name ?? '')}">
+        </div>
+
+        <div class="field">
+          <label>Lake</label>
+          <input class="input" id="f-lake" value="${escapeHtml(m.lake ?? '')}" placeholder="e.g. Lake Simcoe (The Narrows)">
+        </div>
+
+        <div class="field">
+          <label>Address</label>
+          <div class="hint" style="margin-top:0; margin-bottom:8px;">Full street address — this is what boaters get routed to when they tap "Get Directions".</div>
+          <input class="input" id="f-address" value="${escapeHtml(m.address ?? '')}" placeholder="Street address, city">
+          <div id="address-status" style="margin-top:8px;">
+            ${m.address ? `<span class="success-text">✓ ${escapeHtml(m.address)}</span>` : ''}
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Phone</label>
+          <input class="input" id="f-phone" value="${escapeHtml(m.phone ?? '')}" type="tel">
+        </div>
+
+        <div class="field">
+          <label>Amenities</label>
+          <div class="chip-row" id="amenity-chips">
+            ${AMENITY_OPTIONS.map((a) => `<div class="chip ${selectedAmenities.includes(a) ? 'active' : ''}" data-amenity="${escapeHtml(a)}">${escapeHtml(a)}</div>`).join('')}
+          </div>
+        </div>
+
+        <p class="error-text" id="save-error" style="display:none;"></p>
+        <p class="success-text" id="save-success" style="display:none;">Saved.</p>
+        <button class="btn btn-primary" id="save-btn">Save changes</button>
+      </div>
+    `;
+
+    document.getElementById('stripe-btn').addEventListener('click', connectStripe);
+
+    document.querySelectorAll('[data-amenity]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const a = el.dataset.amenity;
+        if (selectedAmenities.includes(a)) selectedAmenities = selectedAmenities.filter((x) => x !== a);
+        else selectedAmenities.push(a);
+        el.classList.toggle('active');
+      });
+    });
+
+    const addressInput = document.getElementById('f-address');
+    addressInput.addEventListener('input', () => {
+      verifiedAddress = null;
+      document.getElementById('address-status').innerHTML = '';
+    });
+
+    document.getElementById('save-btn').addEventListener('click', saveProfile);
+  }
+
+  // Same OpenStreetMap Nominatim check the app uses on marina onboarding —
+  // keeps a marina from silently saving an address that mis-routes "Get
+  // Directions" (e.g. resolves to the wrong city/country entirely).
+  async function verifyAddress(query) {
+    const q = query.trim();
+    if (q.length < 5) return null;
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&countrycodes=ca&q=${encodeURIComponent(q)}`;
+      const res = await fetch(url, { headers: { 'User-Agent': 'NarrowsMarinaPortal/1.0 (hello@narrows.site)' } });
+      const json = await res.json();
+      const hit = json?.[0];
+      if (!hit?.address?.house_number) return null;
+      return { formatted: hit.display_name, latitude: parseFloat(hit.lat), longitude: parseFloat(hit.lon) };
+    } catch {
+      return null;
+    }
+  }
+
+  async function saveProfile() {
+    const errorEl = document.getElementById('save-error');
+    const successEl = document.getElementById('save-success');
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
+
+    const name = document.getElementById('f-name').value.trim();
+    const lake = document.getElementById('f-lake').value.trim() || null;
+    const addressText = document.getElementById('f-address').value.trim();
+    const phone = document.getElementById('f-phone').value.trim() || null;
+
+    if (!name) { errorEl.textContent = 'Marina name is required.'; errorEl.style.display = 'block'; return; }
+
+    const saveBtn = document.getElementById('save-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+
+    const update = { name, lake, phone, amenities: selectedAmenities };
+
+    if (addressText) {
+      if (!verifiedAddress || verifiedAddress.formatted !== addressText) {
+        const statusEl = document.getElementById('address-status');
+        statusEl.innerHTML = '<span style="color:var(--muted); font-size:13px;">Checking address…</span>';
+        const result = await verifyAddress(addressText);
+        if (!result) {
+          statusEl.innerHTML = '';
+          errorEl.textContent = "Couldn't verify that address — include the street number and city, then try again.";
+          errorEl.style.display = 'block';
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save changes';
+          return;
+        }
+        verifiedAddress = result;
+        statusEl.innerHTML = `<span class="success-text">✓ ${escapeHtml(result.formatted)}</span>`;
+      }
+      update.address = verifiedAddress.formatted;
+      update.latitude = verifiedAddress.latitude;
+      update.longitude = verifiedAddress.longitude;
+    } else {
+      update.address = null;
+    }
+
+    const { error } = await supabase.from('marinas').update(update).eq('id', marinaRef.id);
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save changes';
+
+    if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; return; }
+    successEl.style.display = 'block';
+    marinaRef = { ...marinaRef, ...update };
+  }
+
+  async function connectStripe() {
+    const btn = document.getElementById('stripe-btn');
+    const errorEl = document.getElementById('stripe-error');
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Opening Stripe…';
+
+    const { data, error } = await supabase.functions.invoke('create-connected-account');
+    btn.disabled = false;
+    btn.textContent = marinaRef.stripe_charges_enabled ? 'Manage Stripe account' : 'Connect with Stripe';
+
+    if (error || !data?.url) {
+      errorEl.textContent = 'Could not open Stripe — try again.';
+      errorEl.style.display = 'block';
+      return;
+    }
+    window.location.href = data.url;
+  }
+</script>
+
+</body>
+</html>

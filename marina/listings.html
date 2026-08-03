@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Listings — Narrows Marina Portal</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/uploads/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/marina/assets/portal.css">
+</head>
+<body>
+
+<div id="portal-header"></div>
+<div class="shell">
+  <div class="page-head">
+    <h1>Listings</h1>
+    <p>What boaters can book, and what it costs. Changes go live immediately.</p>
+  </div>
+  <div id="content"><div class="spinner">Loading…</div></div>
+</div>
+
+<script type="module">
+  import { supabase, requireMarinaSession, renderNav, pendingApprovalHtml, formatCents, escapeHtml } from '/marina/assets/portal.js';
+
+  const TYPE_LABEL = { slip: 'Slip', day_slip: 'Day Slip', mooring: 'Mooring', storage: 'Storage', haul_out: 'Haul-Out', winterization: 'Winterization', rental: 'Rental', fuel: 'Fuel' };
+  const TYPE_OPTIONS = Object.entries(TYPE_LABEL);
+  const UNIT_OPTIONS = ['night', 'day', 'hour', 'flat', 'season'];
+
+  let marinaRef = null;
+
+  const session = await requireMarinaSession();
+  if (session) {
+    const { marina, isPending } = session;
+    marinaRef = marina;
+    renderNav('listings', marina?.name);
+
+    const content = document.getElementById('content');
+    if (isPending) content.innerHTML = pendingApprovalHtml();
+    else await loadListings();
+  }
+
+  async function loadListings() {
+    const content = document.getElementById('content');
+    const { data } = await supabase.from('marina_listings').select('*').eq('marina_id', marinaRef.id).order('listing_type').order('name');
+    const listings = data ?? [];
+
+    content.innerHTML = `
+      ${listings.length === 0 ? '<p class="empty">No listings yet — add your first one below.</p>' : listings.map(listingCardHtml).join('')}
+      <div class="card">
+        <h2>Add a listing</h2>
+        <div class="field">
+          <label>Service type</label>
+          <select class="input" id="new-type">
+            ${TYPE_OPTIONS.map(([key, label]) => `<option value="${key}">${label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>Name</label>
+          <input class="input" id="new-name" placeholder="e.g. Slip A13, Seadoo GTI #3">
+        </div>
+        <div class="field" style="display:flex; gap:12px;">
+          <div style="flex:1;">
+            <label>Price ($, optional)</label>
+            <input class="input" type="number" step="0.01" id="new-price" placeholder="Leave blank for &quot;contact for pricing&quot;">
+          </div>
+          <div style="width:140px;">
+            <label>Per</label>
+            <select class="input" id="new-unit">${UNIT_OPTIONS.map((u) => `<option value="${u}">${u}</option>`).join('')}</select>
+          </div>
+        </div>
+        <p class="error-text" id="new-error" style="display:none;"></p>
+        <button class="btn btn-primary" id="add-btn">Add listing</button>
+      </div>
+    `;
+
+    listings.forEach((l) => wireListingCard(l));
+    document.getElementById('add-btn').addEventListener('click', addListing);
+  }
+
+  function listingCardHtml(l) {
+    return `
+      <div class="card" id="listing-${l.id}">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+          <h2>${escapeHtml(l.name)}</h2>
+          <span class="pill" style="background: rgba(201,168,76,0.15); color: var(--gold);">${TYPE_LABEL[l.listing_type] ?? l.listing_type}</span>
+        </div>
+        <div class="field" style="display:flex; gap:12px;">
+          <div style="flex:1;">
+            <label>Price ($)</label>
+            <input class="input" type="number" step="0.01" id="price-${l.id}" value="${l.price_cents != null ? (l.price_cents / 100) : ''}" placeholder="Contact for pricing">
+          </div>
+          <div style="width:140px;">
+            <label>Per</label>
+            <select class="input" id="unit-${l.id}">${UNIT_OPTIONS.map((u) => `<option value="${u}" ${u === l.price_unit ? 'selected' : ''}>${u}</option>`).join('')}</select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Description (optional, shown to boaters)</label>
+          <textarea class="input" id="desc-${l.id}">${escapeHtml(l.description ?? '')}</textarea>
+        </div>
+        <div class="field" style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" id="active-${l.id}" ${l.active ? 'checked' : ''} style="width:18px; height:18px;">
+          <label for="active-${l.id}" style="margin:0;">Visible to boaters</label>
+        </div>
+        <p class="error-text" id="error-${l.id}" style="display:none;"></p>
+        <p class="success-text" id="success-${l.id}" style="display:none;">Saved.</p>
+        <button class="btn btn-secondary btn-sm" id="save-${l.id}">Save changes</button>
+      </div>
+    `;
+  }
+
+  function wireListingCard(l) {
+    document.getElementById(`save-${l.id}`).addEventListener('click', async () => {
+      const priceVal = document.getElementById(`price-${l.id}`).value.trim();
+      const price_cents = priceVal ? Math.round(parseFloat(priceVal) * 100) : null;
+      const price_unit = document.getElementById(`unit-${l.id}`).value;
+      const description = document.getElementById(`desc-${l.id}`).value.trim() || null;
+      const active = document.getElementById(`active-${l.id}`).checked;
+
+      const errorEl = document.getElementById(`error-${l.id}`);
+      const successEl = document.getElementById(`success-${l.id}`);
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+
+      if (priceVal && Number.isNaN(price_cents)) { errorEl.textContent = 'Enter a valid price.'; errorEl.style.display = 'block'; return; }
+
+      const { error } = await supabase.from('marina_listings').update({ price_cents, price_unit, description, active }).eq('id', l.id);
+      if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; return; }
+      successEl.style.display = 'block';
+    });
+  }
+
+  async function addListing() {
+    const listing_type = document.getElementById('new-type').value;
+    const name = document.getElementById('new-name').value.trim();
+    const priceVal = document.getElementById('new-price').value.trim();
+    const price_unit = document.getElementById('new-unit').value;
+    const errorEl = document.getElementById('new-error');
+    errorEl.style.display = 'none';
+
+    if (!name) { errorEl.textContent = 'Give this listing a name.'; errorEl.style.display = 'block'; return; }
+    const price_cents = priceVal ? Math.round(parseFloat(priceVal) * 100) : null;
+    if (priceVal && Number.isNaN(price_cents)) { errorEl.textContent = 'Enter a valid price.'; errorEl.style.display = 'block'; return; }
+
+    const exclusive = !['winterization', 'fuel'].includes(listing_type);
+    const { error } = await supabase.from('marina_listings').insert({
+      marina_id: marinaRef.id, listing_type, name, price_cents, price_unit, exclusive, active: true,
+    });
+    if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; return; }
+    await loadListings();
+  }
+</script>
+
+</body>
+</html>

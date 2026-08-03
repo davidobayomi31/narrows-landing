@@ -1,3 +1,10 @@
 # Apple requires the association file to be served as application/json with no redirect.
 /.well-known/apple-app-site-association
   Content-Type: application/json
+
+# No build step / no filename hashing for the marina portal's JS+CSS, so a
+# stale cached copy could silently keep serving old (possibly broken) code
+# after a deploy. Force revalidation instead of Netlify's default heuristic
+# caching.
+/marina/assets/*
+  Cache-Control: no-cache

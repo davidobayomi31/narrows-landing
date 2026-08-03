@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard — Narrows Marina Portal</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/uploads/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/marina/assets/portal.css">
+</head>
+<body>
+
+<div id="portal-header"></div>
+<div class="shell">
+  <div class="page-head">
+    <h1 id="greeting">Dashboard</h1>
+    <p id="subgreeting"></p>
+  </div>
+  <div id="content"><div class="spinner">Loading…</div></div>
+</div>
+
+<script type="module">
+  import { supabase, requireMarinaSession, renderNav, pendingApprovalHtml, formatCents, escapeHtml } from '/marina/assets/portal.js';
+
+  const session = await requireMarinaSession();
+  if (session) {
+    const { marina, isPending, profile } = session;
+    renderNav('dashboard', marina?.name);
+
+    document.getElementById('greeting').textContent = `Welcome back${profile.first_name ? ', ' + profile.first_name : ''}`;
+
+    const content = document.getElementById('content');
+
+    if (isPending) {
+      document.getElementById('subgreeting').textContent = 'Your marina application is being reviewed.';
+      content.innerHTML = pendingApprovalHtml();
+    } else {
+      document.getElementById('subgreeting').textContent = marina.name;
+      await loadDashboard(marina);
+    }
+  }
+
+  async function loadDashboard(marina) {
+    const content = document.getElementById('content');
+
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
+    const [{ data: allBookings }, { data: listings }] = await Promise.all([
+      supabase.from('bookings').select('id, listing_id, status, quoted_cents, created_at, exclusive, start_date, end_date, start_ts, end_ts, marina_listings!inner(listing_type, name)').eq('marina_id', marina.id).order('created_at', { ascending: false }),
+      supabase.from('marina_listings').select('id, active, exclusive').eq('marina_id', marina.id),
+    ]);
+
+    const bookings = allBookings ?? [];
+    const pendingCount = bookings.filter((b) => b.status === 'pending').length;
+    const monthRevenueCents = bookings
+      .filter((b) => ['paid', 'completed'].includes(b.status) && new Date(b.created_at) >= monthStart)
+      .reduce((sum, b) => sum + (b.quoted_cents ?? 0), 0);
+
+    // Occupancy: of the marina's active EXCLUSIVE listings (slip, storage,
+    // rental, etc. — the ones only one boater can hold at a time), how many
+    // are held right now by a live booking. Half-open date range, matching
+    // how bookings.start_date/end_date already work everywhere else (a
+    // departure day is free again, not still occupied).
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    const exclusiveActiveListings = (listings ?? []).filter((l) => l.exclusive && l.active);
+    const occupiedListingIds = new Set();
+    for (const b of bookings) {
+      if (!b.exclusive || !['approved', 'paid'].includes(b.status)) continue;
+      const occupied = (b.start_ts && b.end_ts)
+        ? (now >= new Date(b.start_ts) && now < new Date(b.end_ts))
+        : (b.start_date && b.end_date && today >= b.start_date && today < b.end_date);
+      if (occupied) occupiedListingIds.add(b.listing_id);
+    }
+    const occupancyText = `${occupiedListingIds.size} / ${exclusiveActiveListings.length}`;
+
+    let stripeBanner = '';
+    if (!marina.stripe_charges_enabled) {
+      stripeBanner = `
+        <div class="card" style="border-color: var(--gold); background: var(--gold-dim);">
+          <h2 style="color: var(--gold);">Finish setting up payouts</h2>
+          <p style="color: var(--muted); font-size: 14px; margin: 8px 0 14px;">
+            Connect a Stripe account so boaters can pay deposits directly to your marina.
+          </p>
+          <a href="/marina/profile.html" class="btn btn-primary btn-sm">Connect with Stripe</a>
+        </div>`;
+    }
+
+    content.innerHTML = `
+      ${stripeBanner}
+      <div class="stat-grid">
+        <div class="stat-card"><div class="label">Pending Requests</div><div class="value">${pendingCount}</div></div>
+        <div class="stat-card"><div class="label">Revenue This Month</div><div class="value">${formatCents(monthRevenueCents)}</div></div>
+        <div class="stat-card"><div class="label">Total Bookings</div><div class="value">${bookings.length}</div></div>
+        <div class="stat-card"><div class="label">Occupied Now</div><div class="value">${occupancyText}</div></div>
+      </div>
+      <div class="card">
+        <h2>Recent requests</h2>
+        ${bookings.length === 0 ? '<p class="empty">No bookings yet.</p>' : `
+          <div class="row-list" style="margin-top: 12px;">
+            ${bookings.slice(0, 5).map((b) => `
+              <a href="/marina/requests.html" class="row-item">
+                <div>
+                  <div class="row-title">${escapeHtml(b.marina_listings?.listing_type ?? 'Booking')} — ${escapeHtml(b.marina_listings?.name ?? '')}</div>
+                  <div class="row-sub">${new Date(b.created_at).toLocaleDateString('en-CA')}</div>
+                </div>
+                <div class="row-right"><span class="pill pill-${b.status}">${b.status}</span></div>
+              </a>
+            `).join('')}
+          </div>
+          <div style="margin-top: 16px;"><a href="/marina/requests.html" class="btn btn-secondary btn-sm">View all requests</a></div>
+        `}
+      </div>
+    `;
+  }
+</script>
+
+</body>
+</html>

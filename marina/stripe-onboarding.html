@@ -36,7 +36,10 @@
   <div id="content">
     <!-- filled by script below based on ?complete=1 / ?refresh=1 -->
   </div>
-  <p class="hint">You can close this tab and return to the Narrows app.</p>
+  <p class="hint" id="hint">You can close this tab and return to the Narrows app.</p>
+  <p class="hint" id="portal-link" style="display:none; margin-top:12px;">
+    <a href="/marina/profile.html" style="color:#1a1a1a; text-decoration:underline;">Back to your marina portal →</a>
+  </p>
 </div>
 
 <footer>
@@ -57,7 +60,20 @@
     el.innerHTML =
       '<div class="icon">&#9203;</div>' +
       '<h1>Let\'s finish setting up your payouts</h1>' +
-      '<p>Open the Narrows app and tap <strong>Connect with Stripe</strong> on your Home screen again to pick up where you left off. Stripe saves your progress, so you won\'t need to start over.</p>';
+      '<p>Tap <strong>Connect with Stripe</strong> again to pick up where you left off. Stripe saves your progress, so you won\'t need to start over.</p>';
+  }
+</script>
+
+<script type="module">
+  // This page is reached from BOTH the app (external browser, no shared
+  // session) and the web portal (same browser, session still in
+  // localStorage) — show the "close this tab" hint only for the app case,
+  // and a direct link back to the portal for the web case.
+  import { supabase } from '/marina/assets/portal.js';
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) {
+    document.getElementById('hint').style.display = 'none';
+    document.getElementById('portal-link').style.display = 'block';
   }
 </script>
 

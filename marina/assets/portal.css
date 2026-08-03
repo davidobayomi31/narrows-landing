@@ -1,0 +1,156 @@
+/* Narrows — marina web portal shared styles. Same palette as the marketing
+   site (index.html): #080a0e bg, #f0ede6 cream, #c9a84c gold, Outfit body
+   font. No build step — plain CSS, loaded by every page under /marina/. */
+
+:root {
+  --bg: #080a0e;
+  --card: #12151b;
+  --card-alt: #1a1e26;
+  --border: #24282f;
+  --cream: #f0ede6;
+  --muted: #9a9a96;
+  --gold: #c9a84c;
+  --gold-dim: rgba(201, 168, 76, 0.12);
+  --red: #e0665a;
+  --green: #5fb87a;
+  --blue: #4f8ff0;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  min-height: 100vh;
+}
+a { color: inherit; }
+h1, h2, h3 { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.01em; margin: 0; }
+p { margin: 0; }
+button { font-family: inherit; cursor: pointer; }
+input, select, textarea { font-family: inherit; }
+
+.shell { max-width: 960px; margin: 0 auto; padding: 0 24px 80px; }
+
+/* ---- topbar + tabs ---- */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px; border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.topbar-brand { display: flex; align-items: center; gap: 10px; }
+.topbar-brand .logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--gold); letter-spacing: 0.04em; }
+.topbar-brand .marina-name { font-size: 14px; color: var(--muted); }
+.topbar-signout {
+  background: transparent; border: 1px solid var(--border); color: var(--muted);
+  border-radius: 8px; padding: 8px 14px; font-size: 13px;
+}
+.topbar-signout:hover { border-color: var(--gold); color: var(--gold); }
+
+.tabs {
+  display: flex; gap: 4px; overflow-x: auto; padding: 12px 24px 0;
+  max-width: 960px; margin: 0 auto; border-bottom: 1px solid var(--border);
+}
+.tabs a {
+  display: inline-block; padding: 10px 16px; font-size: 14px; font-weight: 500;
+  color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+.tabs a.active { color: var(--gold); border-bottom-color: var(--gold); }
+.tabs a:hover { color: var(--cream); }
+
+/* ---- layout basics ---- */
+.page-head { padding: 32px 0 20px; }
+.page-head h1 { font-size: 34px; color: var(--cream); }
+.page-head p { color: var(--muted); font-size: 14px; margin-top: 6px; }
+
+.card {
+  background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+  padding: 20px; margin-bottom: 16px;
+}
+.card h2 { font-size: 18px; color: var(--cream); margin-bottom: 4px; text-transform: none; letter-spacing: 0; font-family: 'Outfit', sans-serif; font-weight: 700; }
+
+.empty { color: var(--muted); font-size: 14px; text-align: center; padding: 40px 20px; }
+
+/* ---- stat grid (dashboard) ---- */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+.stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+.stat-card .value { font-size: 30px; font-weight: 700; color: var(--gold); margin-top: 6px; }
+
+/* ---- forms ---- */
+.field { margin-bottom: 18px; }
+.field label { display: block; font-size: 13px; font-weight: 600; color: var(--cream); margin-bottom: 6px; }
+.field .hint { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+.input, select.input, textarea.input {
+  width: 100%; background: var(--card-alt); border: 1px solid var(--border); border-radius: 10px;
+  padding: 11px 14px; color: var(--cream); font-size: 14px; outline: none;
+}
+.input:focus { border-color: var(--gold); }
+textarea.input { resize: vertical; min-height: 70px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: 10px; padding: 12px 20px; font-size: 14px; font-weight: 600;
+  border: 1px solid transparent; text-decoration: none;
+}
+.btn-primary { background: var(--gold); color: #080a0e; }
+.btn-primary:hover { background: #dbbe65; }
+.btn-primary:disabled { opacity: 0.45; cursor: default; }
+.btn-secondary { background: transparent; border-color: var(--border); color: var(--cream); }
+.btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+.btn-danger { background: transparent; border-color: rgba(224,102,90,0.4); color: var(--red); }
+.btn-danger:hover { background: rgba(224,102,90,0.1); }
+.btn-sm { padding: 8px 14px; font-size: 13px; }
+
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  padding: 8px 14px; border-radius: 100px; font-size: 13px; background: var(--card-alt);
+  border: 1px solid var(--border); color: var(--cream); cursor: pointer;
+}
+.chip.active { background: var(--gold); border-color: var(--gold); color: #080a0e; font-weight: 700; }
+
+/* ---- status pills ---- */
+.pill { display: inline-block; padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.pill-pending { background: rgba(201,168,76,0.15); color: var(--gold); }
+.pill-approved { background: rgba(79,143,240,0.15); color: var(--blue); }
+.pill-in_progress { background: rgba(79,143,240,0.15); color: var(--blue); }
+.pill-paid { background: rgba(95,184,122,0.15); color: var(--green); }
+.pill-completed { background: rgba(95,184,122,0.15); color: var(--green); }
+.pill-declined { background: rgba(224,102,90,0.15); color: var(--red); }
+.pill-cancelled { background: rgba(154,154,150,0.15); color: var(--muted); }
+
+/* ---- list rows (requests, listings, messages) ---- */
+.row-list { display: flex; flex-direction: column; gap: 10px; }
+.row-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px 18px; text-decoration: none; color: inherit;
+}
+.row-item:hover { border-color: var(--gold); }
+.row-item .row-title { font-size: 15px; font-weight: 600; color: var(--cream); }
+.row-item .row-sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+.row-item .row-right { text-align: right; flex-shrink: 0; }
+.row-item .row-badge { position: relative; }
+.unread-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); margin-left: 8px; }
+
+/* ---- login page ---- */
+.login-wrap { max-width: 380px; margin: 0 auto; padding: 100px 24px; text-align: center; }
+.login-wrap .logo { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: var(--gold); margin-bottom: 8px; }
+.login-wrap h1 { font-size: 24px; color: var(--cream); margin-bottom: 8px; }
+.login-wrap p { color: var(--muted); font-size: 14px; line-height: 1.6; margin-bottom: 28px; }
+.login-wrap .field { text-align: left; }
+
+/* ---- misc ---- */
+.spinner { color: var(--muted); font-size: 14px; text-align: center; padding: 60px 20px; }
+.error-text { color: var(--red); font-size: 13px; margin-top: 8px; }
+.success-text { color: var(--green); font-size: 13px; margin-top: 8px; }
+.divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+@media (max-width: 640px) {
+  .shell { padding: 0 16px 60px; }
+  .topbar { padding: 16px; }
+  .tabs { padding: 10px 16px 0; }
+  .row-item { flex-direction: column; align-items: flex-start; }
+  .row-item .row-right { text-align: left; }
+}
