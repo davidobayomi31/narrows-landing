@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apply as a Marina — Narrows</title>
+<meta name="description" content="Get your marina listed on Narrows — a few quick questions, then Ace writes your profile for you.">
+<link rel="icon" href="/uploads/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/marina/assets/portal.css">
+<style>
+  /* Ace-specific chat UI — everything else (palette, fonts) comes from portal.css */
+  body { padding-bottom: 140px; }
+  .ace-shell { max-width: 640px; margin: 0 auto; padding: 32px 20px 40px; }
+  .ace-header { text-align: center; margin-bottom: 24px; }
+  .ace-header .logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--gold); letter-spacing: 0.04em; }
+  .ace-header h1 { font-size: 26px; color: var(--cream); margin-top: 6px; }
+
+  .thread { display: flex; flex-direction: column; gap: 14px; }
+  .bubble-row { display: flex; gap: 10px; align-items: flex-start; }
+  .bubble-row.user { flex-direction: row-reverse; }
+  .avatar {
+    flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 15px; font-weight: 700; background: var(--gold-dim); color: var(--gold);
+  }
+  .avatar.user { background: var(--card-alt); color: var(--cream); }
+  .bubble {
+    max-width: 78%; padding: 12px 16px; border-radius: 14px; font-size: 14.5px; line-height: 1.55;
+    background: var(--card); border: 1px solid var(--border); color: var(--cream);
+  }
+  .bubble-row.user .bubble { background: var(--gold-dim); border-color: rgba(201,168,76,0.3); }
+  .bubble p { margin: 0; }
+  .bubble .hint { color: var(--muted); font-size: 12px; margin-top: 6px; }
+
+  .input-dock {
+    position: fixed; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, var(--bg) 60%, transparent);
+    padding: 20px 20px 24px;
+  }
+  .input-card {
+    max-width: 640px; margin: 0 auto; background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 14px 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .input-row { display: flex; gap: 10px; align-items: center; }
+  .input-row .input { flex: 1; }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 10px; background: var(--gold); color: #080a0e; border: none;
+    display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;
+  }
+  .icon-btn:disabled { opacity: 0.4; }
+  .skip-link { display: block; text-align: center; margin-top: 10px; font-size: 12px; color: var(--muted); text-decoration: underline; cursor: pointer; }
+  .continue-row { display: flex; gap: 10px; }
+
+  .spinner-dots { display: flex; gap: 4px; padding: 4px 0; }
+  .spinner-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: bounce 1.2s infinite ease-in-out; }
+  .spinner-dots span:nth-child(2) { animation-delay: 0.15s; }
+  .spinner-dots span:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; } 40% { transform: scale(1); opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="ace-shell">
+  <div class="ace-header">
+    <div class="logo">NARROWS</div>
+    <h1>Apply with Ace</h1>
+  </div>
+  <div class="thread" id="thread"></div>
+</div>
+
+<div class="input-dock" id="input-dock"></div>
+
+<script type="module">
+  import { supabase, escapeHtml } from '/marina/assets/portal.js';
+
+  const SERVICE_OPTIONS = [
+    { key: 'slip', label: 'Slip rental (seasonal)', description: 'Boaters reserve a slip for the whole season and pay you directly through the app.' },
+    { key: 'day_slip', label: 'Day slip / transient dockage', description: 'Short-term docking for boaters passing through, booked and paid per visit.' },
+    { key: 'winterization', label: 'Winterization', description: 'Boaters book to have their boat winterized before the season ends.' },
+    { key: 'rental', label: 'Watercraft rental (seadoo, kayak, etc.)', description: "Boaters instantly book and pay to rent your watercraft — no approval step needed." },
+    { key: 'storage', label: 'Land / covered storage', description: 'Boaters reserve storage space for their boat or trailer during the off-season.' },
+    { key: 'haul_out', label: 'Haul-out / lift service', description: 'Boaters book a one-time haul-out or lift for their boat.' },
+  ];
+  const AMENITY_OPTIONS = [
+    'Fuel Dock', 'WiFi', 'Showers', 'Restrooms', 'Pump-Out Station', 'Laundry',
+    'Picnic Area', 'Boat Ramp', 'Ice', 'Repair Shop', 'Bait & Tackle', 'Security / Gated',
+  ];
+
+  const thread = document.getElementById('thread');
+  const dock = document.getElementById('input-dock');
+
+  const answers = {
+    first_name: '', last_name: '', marina_name: '', location: '', years_in_business: '',
+    services: [], other_service: '', amenities: [], extra_notes: '', num_slips: '', phone: '',
+    verifiedAddress: null, summary: '', suggested_amenities: [],
+  };
+
+  function botBubble(html) {
+    const row = document.createElement('div');
+    row.className = 'bubble-row';
+    row.innerHTML = `<div class="avatar">A</div><div class="bubble">${html}</div>`;
+    thread.appendChild(row);
+    row.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    return row.querySelector('.bubble');
+  }
+
+  function userBubble(text) {
+    const row = document.createElement('div');
+    row.className = 'bubble-row user';
+    row.innerHTML = `<div class="avatar user">${escapeHtml((answers.first_name || 'Y')[0].toUpperCase())}</div><div class="bubble">${escapeHtml(text)}</div>`;
+    thread.appendChild(row);
+    row.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }
+
+  function setDock(html) {
+    dock.innerHTML = html ? `<div class="input-card">${html}</div>` : '';
+  }
+
+  // ---- verifyAddress: same OpenStreetMap Nominatim check as the app and profile.html ----
+  async function verifyAddress(query) {
+    const q = query.trim();
+    if (q.length < 5) return null;
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&countrycodes=ca&q=${encodeURIComponent(q)}`;
+      const res = await fetch(url, { headers: { 'User-Agent': 'NarrowsAce/1.0 (hello@narrows.site)' } });
+      const json = await res.json();
+      const hit = json?.[0];
+      if (!hit?.address?.house_number) return null;
+      return { formatted: hit.display_name, latitude: parseFloat(hit.lat), longitude: parseFloat(hit.lon) };
+    } catch {
+      return null;
+    }
+  }
+
+  // ---- Step engine ----
+  const STEP_ORDER = ['intro', 'name', 'marina_name', 'location', 'years', 'services', 'amenities', 'notes', 'slips', 'phone', 'summary', 'email', 'done'];
+  let stepIndex = 0;
+
+  function next() {
+    stepIndex += 1;
+    runStep(STEP_ORDER[stepIndex]);
+  }
+
+  function runStep(key) {
+    switch (key) {
+      case 'intro': return stepIntro();
+      case 'name': return stepName();
+      case 'marina_name': return stepMarinaName();
+      case 'location': return stepLocation();
+      case 'years': return stepYears();
+      case 'services': return stepServices();
+      case 'amenities': return stepAmenities();
+      case 'notes': return stepNotes();
+      case 'slips': return stepSlips();
+      case 'phone': return stepPhone();
+      case 'summary': return stepSummary();
+      case 'email': return stepEmail();
+      case 'done': return; // handled inline by stepEmail's submit
+    }
+  }
+
+  function stepIntro() {
+    botBubble(`Hey! I'm Ace 👋 I'll help get your marina listed on Narrows — takes about 3 minutes, and I'll write your profile summary for you at the end.`);
+    setDock(`<button class="btn btn-primary" style="width:100%;" id="start-btn">Let's go</button>`);
+    document.getElementById('start-btn').addEventListener('click', next);
+  }
+
+  function stepName() {
+    botBubble(`First — what's your name?`);
+    setDock(`
+      <div class="input-row" style="margin-bottom:10px;">
+        <input class="input" id="f-first" placeholder="First name">
+        <input class="input" id="f-last" placeholder="Last name">
+      </div>
+      <button class="btn btn-primary" style="width:100%;" id="name-btn" disabled>Continue</button>
+    `);
+    const first = document.getElementById('f-first');
+    const last = document.getElementById('f-last');
+    const btn = document.getElementById('name-btn');
+    const check = () => { btn.disabled = !(first.value.trim() && last.value.trim()); };
+    first.addEventListener('input', check);
+    last.addEventListener('input', check);
+    btn.addEventListener('click', () => {
+      answers.first_name = first.value.trim();
+      answers.last_name = last.value.trim();
+      userBubble(`${answers.first_name} ${answers.last_name}`);
+      next();
+    });
+  }
+
+  function stepMarinaName() {
+    botBubble(`Nice to meet you, ${escapeHtml(answers.first_name)}. What's your marina called?`);
+    setDock(`
+      <div class="input-row">
+        <input class="input" id="f-marina" placeholder="e.g. Blue Beacon Marina">
+        <button class="icon-btn" id="marina-btn" disabled>→</button>
+      </div>
+    `);
+    const input = document.getElementById('f-marina');
+    const btn = document.getElementById('marina-btn');
+    input.addEventListener('input', () => { btn.disabled = !input.value.trim(); });
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !btn.disabled) btn.click(); });
+    btn.addEventListener('click', () => {
+      answers.marina_name = input.value.trim();
+      userBubble(answers.marina_name);
+      next();
+    });
+  }
+
+  function stepLocation() {
+    botBubble(`Where's it located? Full street address please — this is what boaters get routed to when they tap "Get Directions".`);
+    setDock(`
+      <div class="input-row" style="margin-bottom:8px;">
+        <input class="input" id="f-address" placeholder="Street address, city">
+        <button class="btn btn-secondary btn-sm" id="verify-btn" disabled>Verify</button>
+      </div>
+      <div id="address-status" style="font-size:12px; min-height:16px;"></div>
+    `);
+    const input = document.getElementById('f-address');
+    const verifyBtn = document.getElementById('verify-btn');
+    const status = document.getElementById('address-status');
+    let verified = null;
+
+    input.addEventListener('input', () => {
+      verified = null;
+      verifyBtn.disabled = !input.value.trim();
+      status.innerHTML = '';
+    });
+
+    verifyBtn.addEventListener('click', async () => {
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = 'Checking…';
+      const result = await verifyAddress(input.value);
+      verifyBtn.textContent = 'Verify';
+      verifyBtn.disabled = false;
+      if (!result) {
+        status.innerHTML = `<span class="error-text">Couldn't find that — include the street number and city, then try again.</span>`;
+        return;
+      }
+      verified = result;
+      status.innerHTML = `<span class="success-text">✓ ${escapeHtml(result.formatted)}</span>`;
+      answers.location = result.formatted;
+      answers.verifiedAddress = result;
+      userBubble(result.formatted);
+      setTimeout(next, 300);
+    });
+  }
+
+  function stepYears() {
+    botBubble(`How many years have you been in business? (Skip if you'd rather not say.)`);
+    setDock(`
+      <div class="input-row">
+        <input class="input" id="f-years" type="number" min="0" placeholder="e.g. 12">
+        <button class="icon-btn" id="years-btn">→</button>
+      </div>
+      <span class="skip-link" id="years-skip">Skip</span>
+    `);
+    const input = document.getElementById('f-years');
+    document.getElementById('years-btn').addEventListener('click', () => {
+      answers.years_in_business = input.value.trim();
+      userBubble(answers.years_in_business ? `${answers.years_in_business} years` : 'Skip');
+      next();
+    });
+    document.getElementById('years-skip').addEventListener('click', () => { userBubble('Skip'); next(); });
+  }
+
+  function stepServices() {
+    botBubble(`Which services do you offer? Pick as many as apply.`);
+    const chipsHtml = SERVICE_OPTIONS.map((o) => `<div class="chip" data-key="${o.key}">${escapeHtml(o.label)}</div>`).join('');
+    setDock(`
+      <div class="chip-row" id="service-chips" style="margin-bottom:10px;">${chipsHtml}</div>
+      <div class="field" style="margin-bottom:10px;">
+        <input class="input" id="f-other-service" placeholder="Offer something else? (optional)">
+      </div>
+      <button class="btn btn-primary" style="width:100%;" id="services-btn" disabled>Continue</button>
+    `);
+    const picked = new Set();
+    document.querySelectorAll('#service-chips [data-key]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const key = el.dataset.key;
+        if (picked.has(key)) { picked.delete(key); el.classList.remove('active'); }
+        else { picked.add(key); el.classList.add('active'); }
+        document.getElementById('services-btn').disabled = picked.size === 0 && !document.getElementById('f-other-service').value.trim();
+      });
+    });
+    const otherInput = document.getElementById('f-other-service');
+    otherInput.addEventListener('input', () => {
+      document.getElementById('services-btn').disabled = picked.size === 0 && !otherInput.value.trim();
+    });
+    document.getElementById('services-btn').addEventListener('click', () => {
+      answers.services = [...picked];
+      answers.other_service = otherInput.value.trim();
+      const labels = SERVICE_OPTIONS.filter((o) => picked.has(o.key)).map((o) => o.label);
+      if (answers.other_service) labels.push(answers.other_service);
+      userBubble(labels.join(', ') || 'None picked');
+      next();
+    });
+  }
+
+  function stepAmenities() {
+    botBubble(`Got it. Any of these amenities on-site? (Optional.)`);
+    const chipsHtml = AMENITY_OPTIONS.map((a) => `<div class="chip" data-a="${escapeHtml(a)}">${escapeHtml(a)}</div>`).join('');
+    setDock(`
+      <div class="chip-row" id="amenity-chips" style="margin-bottom:10px;">${chipsHtml}</div>
+      <div class="continue-row">
+        <button class="btn btn-primary" style="flex:1;" id="amenities-btn">Continue</button>
+      </div>
+    `);
+    const picked = new Set();
+    document.querySelectorAll('#amenity-chips [data-a]').forEach((el) => {
+      el.addEventListener('click', () => {
+        const a = el.dataset.a;
+        if (picked.has(a)) { picked.delete(a); el.classList.remove('active'); }
+        else { picked.add(a); el.classList.add('active'); }
+      });
+    });
+    document.getElementById('amenities-btn').addEventListener('click', () => {
+      answers.amenities = [...picked];
+      userBubble(answers.amenities.length ? answers.amenities.join(', ') : 'None');
+      next();
+    });
+  }
+
+  function stepNotes() {
+    botBubble(`Anything else worth mentioning — special services, what makes your marina unique? (Optional — I'll use this to write your profile.)`);
+    setDock(`
+      <textarea class="input" id="f-notes" rows="3" style="margin-bottom:10px;" placeholder="e.g. We've been family-run since 1987, right at the mouth of the Narrows..."></textarea>
+      <button class="btn btn-primary" style="width:100%;" id="notes-btn">Continue</button>
+    `);
+    document.getElementById('notes-btn').addEventListener('click', () => {
+      answers.extra_notes = document.getElementById('f-notes').value.trim();
+      userBubble(answers.extra_notes || 'Nothing else');
+      next();
+    });
+  }
+
+  function stepSlips() {
+    botBubble(`How many slips or boats can you handle? (Optional.)`);
+    setDock(`
+      <div class="input-row">
+        <input class="input" id="f-slips" type="number" min="0" placeholder="e.g. 40">
+        <button class="icon-btn" id="slips-btn">→</button>
+      </div>
+      <span class="skip-link" id="slips-skip">Skip</span>
+    `);
+    document.getElementById('slips-btn').addEventListener('click', () => {
+      answers.num_slips = document.getElementById('f-slips').value.trim();
+      userBubble(answers.num_slips || 'Skip');
+      next();
+    });
+    document.getElementById('slips-skip').addEventListener('click', () => { userBubble('Skip'); next(); });
+  }
+
+  function stepPhone() {
+    botBubble(`Best phone number for us to reach you during review? (Optional.)`);
+    setDock(`
+      <div class="input-row">
+        <input class="input" id="f-phone" type="tel" placeholder="705-555-0100">
+        <button class="icon-btn" id="phone-btn">→</button>
+      </div>
+      <span class="skip-link" id="phone-skip">Skip</span>
+    `);
+    document.getElementById('phone-btn').addEventListener('click', () => {
+      answers.phone = document.getElementById('f-phone').value.trim();
+      userBubble(answers.phone || 'Skip');
+      next();
+    });
+    document.getElementById('phone-skip').addEventListener('click', () => { userBubble('Skip'); next(); });
+  }
+
+  async function stepSummary() {
+    const bubble = botBubble(`Let me put together a profile for you…`);
+    bubble.innerHTML = `<div class="spinner-dots"><span></span><span></span><span></span></div>`;
+    setDock('');
+
+    const { data, error } = await supabase.functions.invoke('ace-summarize', {
+      body: {
+        marina_name: answers.marina_name,
+        location: answers.location,
+        years_in_business: answers.years_in_business ? Number(answers.years_in_business) : null,
+        services: answers.services,
+        other_service: answers.other_service,
+        amenities: answers.amenities,
+        extra_notes: answers.extra_notes,
+        num_slips: answers.num_slips ? Number(answers.num_slips) : null,
+      },
+    });
+
+    if (error || !data?.summary) {
+      bubble.innerHTML = `We couldn't generate a summary right now, but that's okay — you can still finish your application and add a description later.`;
+      answers.summary = '';
+      setTimeout(next, 800);
+      return;
+    }
+
+    answers.summary = data.summary;
+    answers.suggested_amenities = (data.suggested_amenities || []).filter((a) => !answers.amenities.includes(a));
+
+    bubble.innerHTML = `Here's a first draft of your marina's public profile — feel free to edit it:`;
+
+    let suggestedHtml = '';
+    if (answers.suggested_amenities.length) {
+      suggestedHtml = `
+        <div class="hint" style="margin-top:2px; margin-bottom:6px;">I also picked up on a few more things you might offer — tap to add:</div>
+        <div class="chip-row" id="suggested-chips" style="margin-bottom:12px;">
+          ${answers.suggested_amenities.map((a) => `<div class="chip" data-a="${escapeHtml(a)}">+ ${escapeHtml(a)}</div>`).join('')}
+        </div>`;
+    }
+
+    setDock(`
+      <textarea class="input" id="f-summary" rows="4" style="margin-bottom:10px;">${escapeHtml(answers.summary)}</textarea>
+      ${suggestedHtml}
+      <button class="btn btn-primary" style="width:100%;" id="summary-btn">Looks good</button>
+    `);
+
+    if (answers.suggested_amenities.length) {
+      document.querySelectorAll('#suggested-chips [data-a]').forEach((el) => {
+        el.addEventListener('click', () => {
+          const a = el.dataset.a;
+          if (el.classList.toggle('active')) {
+            if (!answers.amenities.includes(a)) answers.amenities.push(a);
+          } else {
+            answers.amenities = answers.amenities.filter((x) => x !== a);
+          }
+        });
+      });
+    }
+
+    document.getElementById('summary-btn').addEventListener('click', () => {
+      answers.summary = document.getElementById('f-summary').value.trim();
+      userBubble('Looks good');
+      next();
+    });
+  }
+
+  function stepEmail() {
+    botBubble(`Last thing — what's your email? I'll send you a link to confirm and finish your application.`);
+    setDock(`
+      <div class="input-row" style="margin-bottom:8px;">
+        <input class="input" id="f-email" type="email" placeholder="you@yourmarina.com">
+        <button class="btn btn-primary btn-sm" id="email-btn" disabled>Send link</button>
+      </div>
+      <p class="error-text" id="email-error" style="display:none;"></p>
+    `);
+    const input = document.getElementById('f-email');
+    const btn = document.getElementById('email-btn');
+    const errorEl = document.getElementById('email-error');
+    input.addEventListener('input', () => { btn.disabled = !input.value.includes('@'); });
+
+    btn.addEventListener('click', async () => {
+      const email = input.value.trim();
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+
+      // Stage the full application as a draft row (public insert, no auth
+      // needed) so the magic link works even if it's opened on a different
+      // device/browser than this one — see marina_apply_drafts in
+      // supabase/ace_onboarding.sql.
+      const payload = {
+        marina_name: answers.marina_name,
+        location: answers.location,
+        location_lat: answers.verifiedAddress?.latitude ?? null,
+        location_lng: answers.verifiedAddress?.longitude ?? null,
+        years_in_business: answers.years_in_business ? Number(answers.years_in_business) : null,
+        contact_phone: answers.phone || null,
+        contact_email: email,
+        services: answers.services,
+        other_service: answers.other_service || null,
+        amenities: answers.amenities,
+        num_slips: answers.num_slips ? Number(answers.num_slips) : null,
+        ai_summary: answers.summary || null,
+        first_name: answers.first_name,
+        last_name: answers.last_name,
+      };
+
+      const { data: draft, error: draftError } = await supabase
+        .from('marina_apply_drafts')
+        .insert({ payload })
+        .select('id')
+        .single();
+
+      if (draftError || !draft) {
+        btn.disabled = false;
+        btn.textContent = 'Send link';
+        errorEl.textContent = 'Could not save your application — try again.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: `https://narrows.site/marina/apply-confirm.html?draft=${draft.id}`,
+        },
+      });
+
+      btn.disabled = false;
+      btn.textContent = 'Send link';
+
+      if (otpError) {
+        errorEl.textContent = otpError.message || 'Could not send the link — try again.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      userBubble(email);
+      setDock('');
+      botBubble(`<strong>Check your email</strong><br>I sent a confirmation link to ${escapeHtml(email)}. Open it to finish your application — your answers are saved, so it's just one click.`);
+    });
+  }
+
+  runStep(STEP_ORDER[stepIndex]);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confirming — Narrows</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/uploads/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/marina/assets/portal.css">
+</head>
+<body>
+
+<div class="login-wrap">
+  <div class="logo">NARROWS</div>
+  <h1 id="title">Finishing up…</h1>
+  <p id="copy">Confirming your application.</p>
+  <div id="extra"></div>
+</div>
+
+<script type="module">
+  import { supabase } from '/marina/assets/portal.js';
+
+  const titleEl = document.getElementById('title');
+  const copyEl = document.getElementById('copy');
+  const extraEl = document.getElementById('extra');
+
+  function fail(title, copy, showRestart) {
+    titleEl.textContent = title;
+    copyEl.textContent = copy;
+    if (showRestart) {
+      extraEl.innerHTML = `<a href="/marina/apply.html" class="btn btn-primary" style="margin-top:12px;">Start over</a>`;
+    }
+  }
+
+  const draftId = new URLSearchParams(window.location.search).get('draft');
+
+  // detectSessionInUrl (set in portal.js) processes the magic-link token from
+  // the URL hash automatically — just wait for the session to appear.
+  let session = null;
+  for (let i = 0; i < 20; i++) {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) { session = data.session; break; }
+    await new Promise((r) => setTimeout(r, 250));
+  }
+
+  if (!session) {
+    fail('Link expired or invalid', 'This confirmation link is no longer valid. Start your application again.', true);
+    throw new Error('no session');
+  }
+
+  if (!draftId) {
+    // Signed in fine, but no draft token in the URL — nothing to submit.
+    // Most likely they're just returning to sign in normally.
+    window.location.href = '/marina/dashboard.html';
+    throw new Error('no draft id');
+  }
+
+  const { data: draftRow, error: draftError } = await supabase
+    .from('marina_apply_drafts')
+    .select('payload')
+    .eq('id', draftId)
+    .maybeSingle();
+
+  if (draftError || !draftRow) {
+    fail(
+      "Couldn't find your application",
+      "Your draft wasn't found on this device — it may have already been submitted, or the link was opened somewhere else. If you haven't applied yet, start over.",
+      true
+    );
+    throw new Error('draft not found');
+  }
+
+  const p = draftRow.payload;
+  const user = session.user;
+
+  const { error: profileError } = await supabase.from('profiles').upsert({
+    id: user.id,
+    first_name: p.first_name || user.user_metadata?.first_name || '',
+    last_name: p.last_name || user.user_metadata?.last_name || '',
+    account_type: 'marina',
+  });
+
+  const { error: appError } = await supabase.from('marina_applications').insert({
+    user_id: user.id,
+    marina_name: p.marina_name,
+    location: p.location,
+    location_lat: p.location_lat,
+    location_lng: p.location_lng,
+    years_in_business: p.years_in_business,
+    contact_phone: p.contact_phone,
+    contact_email: p.contact_email,
+    services: p.services,
+    other_service: p.other_service,
+    amenities: p.amenities,
+    num_slips: p.num_slips,
+    ai_summary: p.ai_summary,
+  });
+
+  // 23505 = unique_violation on marina_applications.user_id — this account
+  // already applied (e.g. re-opened an old confirmation link, or applied
+  // once through the app already). Not an error from the user's point of
+  // view: their application already exists, so just take them to it.
+  if (appError && appError.code === '23505') {
+    supabase.from('marina_apply_drafts').delete().eq('id', draftId);
+    window.location.href = '/marina/dashboard.html';
+    throw new Error('already applied');
+  }
+
+  if (profileError || appError) {
+    fail('Something went wrong', (profileError || appError).message, false);
+    throw new Error('submit failed');
+  }
+
+  // Best-effort cleanup — a leftover draft row is harmless, so don't block
+  // navigation on it.
+  supabase.from('marina_apply_drafts').delete().eq('id', draftId);
+
+  titleEl.textContent = "You're all set";
+  copyEl.textContent = 'Your application is in — redirecting you to your portal…';
+  setTimeout(() => { window.location.href = '/marina/dashboard.html'; }, 1200);
+</script>
+
+</body>
+</html>

@@ -73,15 +73,17 @@ export async function requireMarinaSession() {
     .single();
 
   if (!profile) {
-    // A brand-new sign-in (magic link creates the auth.users row on first
-    // use) with no profiles row at all yet — this account has never applied
-    // as a marina. That only happens through the app right now.
+    // Shouldn't normally happen — login.html only allows existing accounts
+    // to sign in (shouldCreateUser: false), and Ace (apply.html /
+    // apply-confirm.html) always creates the profiles row before ever
+    // reaching a portal page. This is the defensive fallback for a stale or
+    // interrupted account (e.g. apply-confirm.html failed partway through).
     document.body.innerHTML = `
       <div class="login-wrap">
         <div class="logo">NARROWS</div>
         <h1>Not a marina account yet</h1>
-        <p>This email hasn't applied as a marina partner. Download the Narrows app and apply from there first — once approved, come back here to sign in with the same email.</p>
-        <a href="https://apps.apple.com/app/narrows/id6788090227" target="_blank" rel="noopener" class="btn btn-primary" style="margin-bottom:12px;">Get the app</a>
+        <p>We couldn't find an application for this email. Apply as a marina to get started — it only takes a few minutes.</p>
+        <a href="/marina/apply.html" class="btn btn-primary" style="margin-bottom:12px;">Apply as a marina</a>
         <button class="btn btn-secondary" id="sign-out-btn">Sign out</button>
       </div>`;
     document.getElementById('sign-out-btn').addEventListener('click', signOut);
