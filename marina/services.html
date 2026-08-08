@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Services — Narrows Marina Portal</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/uploads/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/marina/assets/portal.css">
+<style>
+  .service-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+  .service-toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 16px; cursor: pointer; transition: border-color 0.15s;
+  }
+  .service-toggle:hover { border-color: var(--gold); }
+  .service-toggle.active { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+  .service-toggle .service-name { font-size: 14px; font-weight: 600; color: var(--cream); }
+  .switch { width: 40px; height: 22px; border-radius: 100px; background: var(--border); position: relative; flex-shrink: 0; transition: background 0.15s; }
+  .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: var(--cream); transition: left 0.15s; }
+  .service-toggle.active .switch { background: var(--gold); }
+  .service-toggle.active .switch::after { left: 20px; background: #080a0e; }
+</style>
+</head>
+<body>
+
+<div id="portal-header"></div>
+<div class="shell">
+  <div class="page-head">
+    <h1>Services</h1>
+    <p>Turn a service on and it shows up on your marina's page right away. For pricing and naming individual units (e.g. "Slip A13"), head to Listings.</p>
+  </div>
+  <div id="content"><div class="spinner">Loading…</div></div>
+</div>
+
+<script type="module">
+  import { supabase, requireMarinaSession, renderNav, pendingApprovalHtml, escapeHtml } from '/marina/assets/portal.js';
+
+  const TYPE_LABEL = { slip: 'Slip', day_slip: 'Day Slip', mooring: 'Mooring', storage: 'Storage', haul_out: 'Haul-Out', winterization: 'Winterization', rental: 'Rental', fuel: 'Fuel' };
+  // Matches provision_listings_from_application()'s default price_unit per
+  // type (supabase/provision_listings.sql) — kept in sync so a service
+  // turned on here behaves the same as one provisioned at signup.
+  const DEFAULT_UNIT = { slip: 'season', day_slip: 'night', rental: 'hour' };
+  const EXCLUSIVE_TYPES = ['slip', 'day_slip', 'rental'];
+
+  let marinaRef = null;
+  let listingsByType = {}; // { [listing_type]: rows[] }
+
+  const session = await requireMarinaSession();
+  if (session) {
+    const { marina, isPending } = session;
+    marinaRef = marina;
+    renderNav('services', marina?.name);
+
+    const content = document.getElementById('content');
+    if (isPending) content.innerHTML = pendingApprovalHtml();
+    else await loadServices();
+  }
+
+  async function loadServices() {
+    const { data } = await supabase.from('marina_listings').select('*').eq('marina_id', marinaRef.id);
+    listingsByType = {};
+    for (const row of data ?? []) {
+      (listingsByType[row.listing_type] ??= []).push(row);
+    }
+    render();
+    await loadSuggestions();
+  }
+
+  function isOn(type) {
+    return (listingsByType[type] ?? []).some((l) => l.active);
+  }
+
+  function render() {
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <div class="card">
+        <h2 style="margin-bottom: 14px;">What do you offer?</h2>
+        <div class="service-grid" id="service-grid">
+          ${Object.entries(TYPE_LABEL).map(([key, label]) => `
+            <div class="service-toggle ${isOn(key) ? 'active' : ''}" data-type="${key}">
+              <span class="service-name">${label}</span>
+              <div class="switch"></div>
+            </div>
+          `).join('')}
+        </div>
+        <p class="error-text" id="toggle-error" style="display:none;"></p>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-bottom: 4px;">Offer something else?</h2>
+        <p style="color:var(--muted); font-size:13px; margin-bottom: 14px;">
+          Don't see it above? Tell us what you'd want to offer and we'll follow up — we review every request by hand.
+        </p>
+        <div class="field">
+          <label>Service</label>
+          <input class="input" id="suggest-service" placeholder="e.g. kayak rentals, boat detailing">
+        </div>
+        <div class="field">
+          <label>Notes (optional)</label>
+          <textarea class="input" id="suggest-notes" placeholder="Anything that'd help us understand what you need"></textarea>
+        </div>
+        <p class="error-text" id="suggest-error" style="display:none;"></p>
+        <p class="success-text" id="suggest-success" style="display:none;">Sent — we'll follow up by email.</p>
+        <button class="btn btn-secondary" id="suggest-btn">Send suggestion</button>
+        <div id="suggestions-list" style="margin-top:18px;"></div>
+      </div>
+    `;
+
+    document.querySelectorAll('.service-toggle').forEach((el) => {
+      el.addEventListener('click', () => toggleService(el.dataset.type));
+    });
+    document.getElementById('suggest-btn').addEventListener('click', sendSuggestion);
+  }
+
+  async function toggleService(type) {
+    const errorEl = document.getElementById('toggle-error');
+    errorEl.style.display = 'none';
+
+    const turningOn = !isOn(type);
+    const existing = listingsByType[type] ?? [];
+
+    let error;
+    if (existing.length === 0 && turningOn) {
+      ({ error } = await supabase.from('marina_listings').insert({
+        marina_id: marinaRef.id,
+        listing_type: type,
+        name: TYPE_LABEL[type],
+        exclusive: EXCLUSIVE_TYPES.includes(type),
+        price_unit: DEFAULT_UNIT[type] ?? 'flat',
+        active: true,
+      }));
+    } else {
+      ({ error } = await supabase.from('marina_listings')
+        .update({ active: turningOn })
+        .eq('marina_id', marinaRef.id)
+        .eq('listing_type', type));
+    }
+
+    if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; return; }
+    await loadServices();
+  }
+
+  async function sendSuggestion() {
+    const errorEl = document.getElementById('suggest-error');
+    const successEl = document.getElementById('suggest-success');
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
+
+    const suggested_service = document.getElementById('suggest-service').value.trim();
+    const notes = document.getElementById('suggest-notes').value.trim() || null;
+    if (!suggested_service) { errorEl.textContent = 'Tell us what service you have in mind.'; errorEl.style.display = 'block'; return; }
+
+    const btn = document.getElementById('suggest-btn');
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    const { error } = await supabase.from('service_suggestions').insert({
+      marina_id: marinaRef.id, suggested_service, notes,
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Send suggestion';
+
+    if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; return; }
+    document.getElementById('suggest-service').value = '';
+    document.getElementById('suggest-notes').value = '';
+    successEl.style.display = 'block';
+    await loadSuggestions();
+  }
+
+  async function loadSuggestions() {
+    const { data } = await supabase
+      .from('service_suggestions')
+      .select('*')
+      .eq('marina_id', marinaRef.id)
+      .order('created_at', { ascending: false });
+
+    const listEl = document.getElementById('suggestions-list');
+    if (!listEl) return;
+    const rows = data ?? [];
+    if (rows.length === 0) { listEl.innerHTML = ''; return; }
+
+    const STATUS_TEXT = { pending: 'Pending review', reviewed: 'Reviewed', added: 'Added', declined: 'Not right now' };
+    listEl.innerHTML = `
+      <div class="divider"></div>
+      <div class="row-list">
+        ${rows.map((r) => `
+          <div class="row-item">
+            <div>
+              <div class="row-title">${escapeHtml(r.suggested_service)}</div>
+              ${r.notes ? `<div class="row-sub">${escapeHtml(r.notes)}</div>` : ''}
+            </div>
+            <div class="row-right"><span class="pill pill-${r.status === 'added' ? 'paid' : r.status === 'declined' ? 'declined' : 'pending'}">${STATUS_TEXT[r.status] ?? r.status}</span></div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+</script>
+
+</body>
+</html>

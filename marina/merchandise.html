@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Merchandise — Narrows Marina Portal</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/uploads/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/marina/assets/portal.css">
+<style>
+  .subtabs { display:flex; gap:8px; margin-bottom: 20px; }
+  .subtabs a { border:1px solid var(--border); border-radius:100px; padding:8px 16px; font-size:13px; color: var(--muted); text-decoration:none; }
+  .subtabs a.active { border-color: var(--gold); color: var(--gold); }
+  .photo-strip { display:flex; gap:8px; flex-wrap:wrap; margin: 10px 0; }
+  .photo-strip img { width:64px; height:64px; object-fit:cover; border-radius:8px; border:1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<div id="portal-header"></div>
+<div class="shell">
+  <div class="page-head">
+    <h1>Merchandise</h1>
+    <p>Sell physical items through the app — apparel, bait, gear, whatever you've got at the dock shop.</p>
+  </div>
+  <div id="content"><div class="spinner">Loading…</div></div>
+</div>
+
+<script type="module">
+  import { supabase, requireMarinaSession, renderNav, pendingApprovalHtml, formatCents, formatDate, escapeHtml } from '/marina/assets/portal.js';
+
+  let marinaRef = null;
+  let activeTab = 'products';
+  let productsCache = [];
+  let ordersCache = [];
+  let orderFilter = 'all';
+  const ORDER_FILTERS = ['all', 'pending_payment', 'paid', 'shipped', 'fulfilled', 'cancelled'];
+  const ORDER_FILTER_LABEL = { all: 'All', pending_payment: 'Awaiting payment', paid: 'Paid', shipped: 'Shipped', fulfilled: 'Fulfilled', cancelled: 'Cancelled' };
+
+  const session = await requireMarinaSession();
+  if (session) {
+    const { marina, isPending } = session;
+    marinaRef = marina;
+    renderNav('merchandise', marina?.name);
+
+    const content = document.getElementById('content');
+    if (isPending) content.innerHTML = pendingApprovalHtml();
+    else await renderShell();
+  }
+
+  async function renderShell() {
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <div class="subtabs">
+        <a href="#" data-tab="products" class="${activeTab === 'products' ? 'active' : ''}">Products</a>
+        <a href="#" data-tab="orders" class="${activeTab === 'orders' ? 'active' : ''}">Orders</a>
+      </div>
+      <div id="tab-content"><div class="spinner">Loading…</div></div>
+    `;
+    content.querySelectorAll('[data-tab]').forEach((el) => {
+      el.addEventListener('click', (e) => { e.preventDefault(); activeTab = el.dataset.tab; renderShell(); });
+    });
+    if (activeTab === 'products') await loadProducts();
+    else await loadOrders();
+  }
+
+  // ---------------------------------------------------------------- Products
+
+  async function loadProducts() {
+    const { data } = await supabase.from('merch_products').select('*').eq('marina_id', marinaRef.id).order('created_at', { ascending: false });
+    productsCache = data ?? [];
+    renderProducts();
+  }
+
+  function renderProducts() {
+    const el = document.getElementById('tab-content');
+    if (!el) return;
+    el.innerHTML = `
+      ${productsCache.length === 0 ? '<p class="empty">No products yet — add your first one below.</p>' : productsCache.map(productCardHtml).join('')}
+      <div class="card">
+        <h2>Add a product</h2>
+        <div class="field"><label>Name</label><input class="input" id="new-name" placeholder="e.g. Narrows Baseball Cap"></div>
+        <div class="field"><label>Description (optional)</label><textarea class="input" id="new-desc"></textarea></div>
+        <div class="field" style="display:flex; gap:12px;">
+          <div style="flex:1;"><label>Price ($)</label><input class="input" type="number" step="0.01" id="new-price" placeholder="25.00"></div>
+          <div style="width:160px;"><label>Fulfillment</label>
+            <select class="input" id="new-fulfillment">
+              <option value="pickup">Pickup at marina</option>
+              <option value="ship">Ships to buyer</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Stock (optional — leave blank if unlimited)</label><input class="input" type="number" step="1" id="new-stock" placeholder="e.g. 20"></div>
+        <p class="error-text" id="new-error" style="display:none;"></p>
+        <button class="btn btn-primary" id="add-product-btn">Add product</button>
+      </div>
+    `;
+    productsCache.forEach((p) => wireProductCard(p));
+    document.getElementById('add-product-btn').addEventListener('click', addProduct);
+  }
+
+  function productCardHtml(p) {
+    return `
+      <div class="card" id="product-${p.id}">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+          <h2>${escapeHtml(p.name)}</h2>
+          <span class="pill" style="background: rgba(201,168,76,0.15); color: var(--gold);">${p.fulfillment_type === 'ship' ? 'Ships to buyer' : 'Pickup'}</span>
+        </div>
+
+        <div class="photo-strip">
+          ${(p.photos ?? []).map((url) => `<img src="${escapeHtml(url)}" alt="">`).join('')}
+        </div>
+        <input type="file" accept="image/*" id="photo-input-${p.id}" style="display:none;">
+        <button class="btn btn-secondary btn-sm" id="photo-btn-${p.id}" style="margin-bottom:14px;">Add photo</button>
+
+        <div class="field" style="display:flex; gap:12px;">
+          <div style="flex:1;"><label>Price ($)</label><input class="input" type="number" step="0.01" id="price-${p.id}" value="${(p.price_cents / 100).toFixed(2)}"></div>
+          <div style="width:160px;"><label>Fulfillment</label>
+            <select class="input" id="fulfillment-${p.id}">
+              <option value="pickup" ${p.fulfillment_type === 'pickup' ? 'selected' : ''}>Pickup at marina</option>
+              <option value="ship" ${p.fulfillment_type === 'ship' ? 'selected' : ''}>Ships to buyer</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Description</label><textarea class="input" id="desc-${p.id}">${escapeHtml(p.description ?? '')}</textarea></div>
+        <div class="field"><label>Stock (blank = unlimited)</label><input class="input" type="number" step="1" id="stock-${p.id}" value="${p.stock_quantity ?? ''}"></div>
+        <div class="field" style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" id="active-${p.id}" ${p.active ? 'checked' : ''} style="width:18px; height:18px;">
+          <label for="active-${p.id}" style="margin:0;">Visible to boaters</label>
+        </div>
+        <p class="error-text" id="error-${p.id}" style="display:none;"></p>
+        <p class="success-text" id="success-${p.id}" style="display:none;">Saved.</p>
+        <button class="btn btn-secondary btn-sm" id="save-${p.id}">Save changes</button>
+      </div>
+    `;
+  }
+
+  function wireProductCard(p) {
+    document.getElementById(`photo-btn-${p.id}`).addEventListener('click', () => document.getElementById(`photo-input-${p.id}`).click());
+    document.getElementById(`photo-input-${p.id}`).addEventListener('change', (e) => uploadProductPhoto(p, e));
+
+    document.getElementById(`save-${p.id}`).addEventListener('click', async () => {
+      const errorEl = document.getElementById(`error-${p.id}`);
+      const successEl = document.getElementById(`success-${p.id}`);
+      errorEl.style.display = 'none';
+      successEl.style.display = 'none';
+
+      const priceVal = document.getElementById(`price-${p.id}`).value.trim();
+      const price_cents = Math.round(parseFloat(priceVal) * 100);
+      if (!priceVal || Number.isNaN(price_cents) || price_cents <= 0) { errorEl.textContent = 'Enter a valid price.'; errorEl.style.display = 'block'; return; }
+
+      const stockVal = document.getElementById(`stock-${p.id}`).value.trim();
+      const stock_quantity = stockVal ? parseInt(stockVal, 10) : null;
+      if (stockVal && (Number.isNaN(stock_quantity) || stock_quantity < 0)) { errorEl.textContent = 'Enter a valid stock count, or leave it blank.'; errorEl.style.display = 'block'; return; }
+
+      const update = {
+        price_cents,
+        fulfillment_type: document.getElementById(`fulfillment-${p.id}`).value,
+        description: document.getElementById(`desc-${p.id}`).value.trim() || null,
+        stock_quantity,
+        active: document.getElementById(`active-${p.id}`).checked,
+      };
+
+      const { error } = await supabase.from('merch_products').update(update).eq('id', p.id);
+      if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; return; }
+      successEl.style.display = 'block';
+    });
+  }
+
+  async function uploadProductPhoto(p, e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const errorEl = document.getElementById(`error-${p.id}`);
+    errorEl.style.display = 'none';
+
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${marinaRef.id}/${p.id}/${Date.now()}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage.from('merch-photos').upload(path, file, { contentType: file.type });
+    if (uploadError) { errorEl.textContent = uploadError.message; errorEl.style.display = 'block'; return; }
+
+    const { data: { publicUrl } } = supabase.storage.from('merch-photos').getPublicUrl(path);
+    const photos = [...(p.photos ?? []), publicUrl];
+
+    const { error: dbError } = await supabase.from('merch_products').update({ photos }).eq('id', p.id);
+    if (dbError) { errorEl.textContent = dbError.message; errorEl.style.display = 'block'; return; }
+
+    await loadProducts();
+  }
+
+  async function addProduct() {
+    const errorEl = document.getElementById('new-error');
+    errorEl.style.display = 'none';
+
+    const name = document.getElementById('new-name').value.trim();
+    const description = document.getElementById('new-desc').value.trim() || null;
+    const priceVal = document.getElementById('new-price').value.trim();
+    const price_cents = Math.round(parseFloat(priceVal) * 100);
+    const fulfillment_type = document.getElementById('new-fulfillment').value;
+    const stockVal = document.getElementById('new-stock').value.trim();
+    const stock_quantity = stockVal ? parseInt(stockVal, 10) : null;
+
+    if (!name) { errorEl.textContent = 'Give this product a name.'; errorEl.style.display = 'block'; return; }
+    if (!priceVal || Number.isNaN(price_cents) || price_cents <= 0) { errorEl.textContent = 'Enter a valid price.'; errorEl.style.display = 'block'; return; }
+    if (stockVal && (Number.isNaN(stock_quantity) || stock_quantity < 0)) { errorEl.textContent = 'Enter a valid stock count, or leave it blank.'; errorEl.style.display = 'block'; return; }
+
+    const { error } = await supabase.from('merch_products').insert({
+      marina_id: marinaRef.id, name, description, price_cents, fulfillment_type, stock_quantity, active: true,
+    });
+    if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; return; }
+    await loadProducts();
+  }
+
+  // ------------------------------------------------------------------ Orders
+
+  async function loadOrders() {
+    const { data } = await supabase
+      .from('merch_orders')
+      .select('*, merch_products(name)')
+      .eq('marina_id', marinaRef.id)
+      .order('created_at', { ascending: false });
+    ordersCache = data ?? [];
+    renderOrders();
+  }
+
+  function renderOrders() {
+    const el = document.getElementById('tab-content');
+    if (!el) return;
+    const visible = orderFilter === 'all' ? ordersCache : ordersCache.filter((o) => o.status === orderFilter);
+
+    el.innerHTML = `
+      <div class="subtabs" style="flex-wrap:wrap;">
+        ${ORDER_FILTERS.map((f) => `<a href="#" data-filter="${f}" class="${f === orderFilter ? 'active' : ''}">${ORDER_FILTER_LABEL[f]}</a>`).join('')}
+      </div>
+      ${visible.length === 0 ? '<p class="empty">No orders here yet.</p>' : `<div class="row-list">${visible.map(orderRowHtml).join('')}</div>`}
+    `;
+
+    el.querySelectorAll('[data-filter]').forEach((a) => {
+      a.addEventListener('click', (e) => { e.preventDefault(); orderFilter = a.dataset.filter; renderOrders(); });
+    });
+    visible.forEach((o) => wireOrderActions(o));
+  }
+
+  function orderRowHtml(o) {
+    const addr = o.shipping_address ? [o.shipping_address.formatted].filter(Boolean).join(', ') : null;
+    return `
+      <div class="row-item" style="align-items:flex-start; flex-direction:column; gap:8px;">
+        <div style="display:flex; width:100%; justify-content:space-between; align-items:center;">
+          <div>
+            <div class="row-title">${escapeHtml(o.merch_products?.name ?? 'Product')} × ${o.quantity}</div>
+            <div class="row-sub">${formatCents(o.unit_price_cents * o.quantity)} — ${formatDate(o.created_at)}</div>
+          </div>
+          <span class="pill pill-${o.status === 'paid' ? 'paid' : o.status === 'cancelled' ? 'cancelled' : o.status === 'pending_payment' ? 'pending' : 'approved'}">${ORDER_FILTER_LABEL[o.status] ?? o.status}</span>
+        </div>
+        ${addr ? `<div class="row-sub">Ship to: ${escapeHtml(addr)}</div>` : ''}
+        ${o.tracking_number ? `<div class="row-sub">Tracking: ${escapeHtml(o.tracking_number)}</div>` : ''}
+        <div id="order-actions-${o.id}" style="display:flex; gap:8px;"></div>
+        <p class="error-text" id="order-error-${o.id}" style="display:none;"></p>
+      </div>
+    `;
+  }
+
+  function wireOrderActions(o) {
+    const actionsEl = document.getElementById(`order-actions-${o.id}`);
+    if (!actionsEl) return;
+
+    if (o.status === 'paid') {
+      const btnLabel = o.shipping_address ? 'Mark shipped' : 'Mark picked up';
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-secondary btn-sm';
+      btn.textContent = btnLabel;
+      btn.addEventListener('click', async () => {
+        let tracking_number = null;
+        if (o.shipping_address) {
+          tracking_number = window.prompt('Tracking number (optional):') || null;
+        }
+        const nextStatus = o.shipping_address ? 'shipped' : 'fulfilled';
+        const { error } = await supabase.from('merch_orders').update({ status: nextStatus, tracking_number }).eq('id', o.id);
+        const errorEl = document.getElementById(`order-error-${o.id}`);
+        if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; return; }
+        await loadOrders();
+      });
+      actionsEl.appendChild(btn);
+    }
+
+    if (o.status === 'shipped') {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-secondary btn-sm';
+      btn.textContent = 'Mark fulfilled';
+      btn.addEventListener('click', async () => {
+        const { error } = await supabase.from('merch_orders').update({ status: 'fulfilled' }).eq('id', o.id);
+        const errorEl = document.getElementById(`order-error-${o.id}`);
+        if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; return; }
+        await loadOrders();
+      });
+      actionsEl.appendChild(btn);
+    }
+  }
+</script>
+
+</body>
+</html>

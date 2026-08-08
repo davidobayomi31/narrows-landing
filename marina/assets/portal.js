@@ -115,6 +115,9 @@ const NAV_ITEMS = [
   { key: 'requests', label: 'Requests', href: '/marina/requests.html' },
   { key: 'messages', label: 'Messages', href: '/marina/messages.html' },
   { key: 'listings', label: 'Listings', href: '/marina/listings.html' },
+  { key: 'services', label: 'Services', href: '/marina/services.html' },
+  { key: 'hours', label: 'Hours', href: '/marina/hours.html' },
+  { key: 'merchandise', label: 'Merchandise', href: '/marina/merchandise.html' },
   { key: 'profile', label: 'Profile', href: '/marina/profile.html' },
 ];
 

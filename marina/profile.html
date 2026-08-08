@@ -51,6 +51,21 @@
     const content = document.getElementById('content');
     content.innerHTML = `
       <div class="card">
+        <h2 style="margin-bottom: 14px;">Marina photo</h2>
+        <div style="display:flex; align-items:center; gap:16px;">
+          <div id="photo-preview" style="width:96px; height:96px; border-radius:12px; overflow:hidden; background:var(--border); flex-shrink:0;">
+            ${m.image_url ? `<img src="${escapeHtml(m.image_url)}" alt="" style="width:100%; height:100%; object-fit:cover;">` : ''}
+          </div>
+          <div style="flex:1;">
+            <p style="color:var(--muted); font-size:13px; margin-bottom:10px;">Shown at the top of your marina's page. JPG or PNG, up to 5MB.</p>
+            <input type="file" accept="image/*" id="photo-input" style="display:none;">
+            <button class="btn btn-secondary btn-sm" id="photo-btn">Upload photo</button>
+            <p class="error-text" id="photo-error" style="display:none;"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
         <h2>Stripe payouts</h2>
         <p style="color:var(--muted); font-size:14px; margin: 8px 0 14px;">
           ${m.stripe_charges_enabled
@@ -97,6 +112,12 @@
           </div>
         </div>
 
+        <div class="field">
+          <label>Bio</label>
+          <div class="hint" style="margin-top:0; margin-bottom:8px;">A short description shown on your marina's page, under your amenities.</div>
+          <textarea class="input" id="f-description" rows="4">${escapeHtml(m.description ?? '')}</textarea>
+        </div>
+
         <p class="error-text" id="save-error" style="display:none;"></p>
         <p class="success-text" id="save-success" style="display:none;">Saved.</p>
         <button class="btn btn-primary" id="save-btn">Save changes</button>
@@ -121,6 +142,42 @@
     });
 
     document.getElementById('save-btn').addEventListener('click', saveProfile);
+
+    document.getElementById('photo-btn').addEventListener('click', () => document.getElementById('photo-input').click());
+    document.getElementById('photo-input').addEventListener('change', uploadPhoto);
+  }
+
+  async function uploadPhoto(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const errorEl = document.getElementById('photo-error');
+    const btn = document.getElementById('photo-btn');
+    errorEl.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Uploading…';
+
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${marinaRef.id}/photo.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('marina-photos')
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    btn.disabled = false;
+    btn.textContent = 'Upload photo';
+
+    if (uploadError) { errorEl.textContent = uploadError.message; errorEl.style.display = 'block'; return; }
+
+    const { data: { publicUrl } } = supabase.storage.from('marina-photos').getPublicUrl(path);
+    // cache-bust — same path every time (upsert), so the browser/CDN would
+    // otherwise keep showing the old image after a re-upload.
+    const bustedUrl = `${publicUrl}?t=${Date.now()}`;
+
+    const { error: dbError } = await supabase.from('marinas').update({ image_url: bustedUrl }).eq('id', marinaRef.id);
+    if (dbError) { errorEl.textContent = dbError.message; errorEl.style.display = 'block'; return; }
+
+    marinaRef = { ...marinaRef, image_url: bustedUrl };
+    document.getElementById('photo-preview').innerHTML = `<img src="${bustedUrl}" alt="" style="width:100%; height:100%; object-fit:cover;">`;
   }
 
   // Same OpenStreetMap Nominatim check the app uses on marina onboarding —
@@ -151,6 +208,7 @@
     const lake = document.getElementById('f-lake').value.trim() || null;
     const addressText = document.getElementById('f-address').value.trim();
     const phone = document.getElementById('f-phone').value.trim() || null;
+    const description = document.getElementById('f-description').value.trim() || null;
 
     if (!name) { errorEl.textContent = 'Marina name is required.'; errorEl.style.display = 'block'; return; }
 
@@ -158,7 +216,7 @@
     saveBtn.disabled = true;
     saveBtn.textContent = 'Saving…';
 
-    const update = { name, lake, phone, amenities: selectedAmenities };
+    const update = { name, lake, phone, amenities: selectedAmenities, description };
 
     if (addressText) {
       if (!verifiedAddress || verifiedAddress.formatted !== addressText) {

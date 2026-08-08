@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hours — Narrows Marina Portal</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/uploads/favicon.ico" sizes="any">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/marina/assets/portal.css">
+<style>
+  .hours-row { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .hours-row:last-child { border-bottom: none; }
+  .hours-day { width: 100px; font-size: 14px; font-weight: 600; color: var(--cream); flex-shrink: 0; }
+  .hours-closed-toggle { display: flex; align-items: center; gap: 6px; width: 110px; flex-shrink: 0; font-size: 13px; color: var(--muted); }
+  .hours-closed-toggle input { width: 16px; height: 16px; accent-color: var(--gold); }
+  .hours-times { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .hours-times input[type="time"] { flex: 1; max-width: 140px; }
+  .hours-times .to { color: var(--muted); font-size: 13px; }
+  .hours-row.is-closed .hours-times { opacity: 0.35; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div id="portal-header"></div>
+<div class="shell">
+  <div class="page-head">
+    <h1>Hours</h1>
+    <p>Let boaters know when you're open — this keeps bookings on the day-slip and rental screens honest about when someone can actually show up.</p>
+  </div>
+  <div id="content"><div class="spinner">Loading…</div></div>
+</div>
+
+<script type="module">
+  import { supabase, requireMarinaSession, renderNav, pendingApprovalHtml, escapeHtml } from '/marina/assets/portal.js';
+
+  const DAYS = [
+    { key: 'mon', label: 'Monday' },
+    { key: 'tue', label: 'Tuesday' },
+    { key: 'wed', label: 'Wednesday' },
+    { key: 'thu', label: 'Thursday' },
+    { key: 'fri', label: 'Friday' },
+    { key: 'sat', label: 'Saturday' },
+    { key: 'sun', label: 'Sunday' },
+  ];
+  const DEFAULT_DAY = { open: '09:00', close: '17:00', closed: false };
+
+  let marinaRef = null;
+  let hours = {};
+
+  const session = await requireMarinaSession();
+  if (session) {
+    const { marina, isPending } = session;
+    marinaRef = marina;
+    renderNav('hours', marina?.name);
+
+    const content = document.getElementById('content');
+    if (isPending) content.innerHTML = pendingApprovalHtml();
+    else renderHours(marina);
+  }
+
+  function renderHours(m) {
+    hours = {};
+    for (const d of DAYS) hours[d.key] = { ...DEFAULT_DAY, ...(m.hours?.[d.key] ?? {}) };
+
+    const content = document.getElementById('content');
+    content.innerHTML = `
+      <div class="card">
+        <h2 style="margin-bottom: 4px;">Operating hours</h2>
+        <p style="color:var(--muted); font-size:13px; margin-bottom: 16px;">
+          Leave a day's times as-is if you're closed that day — just check "Closed."
+        </p>
+        ${DAYS.map((d) => hoursRowHtml(d)).join('')}
+        <p class="error-text" id="save-error" style="display:none;"></p>
+        <p class="success-text" id="save-success" style="display:none;">Saved.</p>
+        <button class="btn btn-primary" id="save-btn" style="margin-top:16px;">Save hours</button>
+      </div>
+    `;
+
+    for (const d of DAYS) {
+      const row = document.getElementById(`row-${d.key}`);
+      const closedInput = document.getElementById(`closed-${d.key}`);
+      closedInput.addEventListener('change', () => {
+        hours[d.key].closed = closedInput.checked;
+        row.classList.toggle('is-closed', closedInput.checked);
+      });
+      document.getElementById(`open-${d.key}`).addEventListener('change', (e) => { hours[d.key].open = e.target.value; });
+      document.getElementById(`close-${d.key}`).addEventListener('change', (e) => { hours[d.key].close = e.target.value; });
+    }
+
+    document.getElementById('save-btn').addEventListener('click', saveHours);
+  }
+
+  function hoursRowHtml(d) {
+    const h = hours[d.key];
+    return `
+      <div class="hours-row ${h.closed ? 'is-closed' : ''}" id="row-${d.key}">
+        <div class="hours-day">${d.label}</div>
+        <label class="hours-closed-toggle">
+          <input type="checkbox" id="closed-${d.key}" ${h.closed ? 'checked' : ''}>
+          Closed
+        </label>
+        <div class="hours-times">
+          <input class="input" type="time" id="open-${d.key}" value="${escapeHtml(h.open)}">
+          <span class="to">to</span>
+          <input class="input" type="time" id="close-${d.key}" value="${escapeHtml(h.close)}">
+        </div>
+      </div>
+    `;
+  }
+
+  async function saveHours() {
+    const errorEl = document.getElementById('save-error');
+    const successEl = document.getElementById('save-success');
+    errorEl.style.display = 'none';
+    successEl.style.display = 'none';
+
+    const saveBtn = document.getElementById('save-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving…';
+
+    const { error } = await supabase.from('marinas').update({ hours }).eq('id', marinaRef.id);
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save hours';
+
+    if (error) { errorEl.textContent = error.message; errorEl.style.display = 'block'; return; }
+    successEl.style.display = 'block';
+    marinaRef = { ...marinaRef, hours };
+  }
+</script>
+
+</body>
+</html>
